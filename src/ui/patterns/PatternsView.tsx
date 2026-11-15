@@ -43,6 +43,7 @@ export function PatternsView({ deck }: { deck: Deck }) {
   return <div className="PatternsView">
     {deck.patterns.length === 0 && <EmptyState>
       初動とみなすカードの組み合わせをパターンとして作成します。「カードグループ」タブで作成したグループか、特定のカードをスロットの対象に指定できます。
+      スロットか追加の条件を{' '}1{' '}つ以上設定してください。条件だけのパターンも作成できます。
     </EmptyState>}
     <Button disabled={deck.patterns.length >= MAX_PATTERNS} onClick={handleCreate}>パターンを作成</Button>
     {calculation.stale && <p className="PatternsView-warning">古い結果（再計算してください）</p>}

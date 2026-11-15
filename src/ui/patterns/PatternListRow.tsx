@@ -26,7 +26,7 @@ export function PatternListRow({ deck, pattern, index, isSelected, estimate,
   onSelect, onMove, onDuplicate, onDelete }: PatternListRowProps) {
   const dispatch = useDispatch();
   const resolveCard = useResolveCard();
-  const summary = pattern.slots.map(slot => {
+  const slotSummary = pattern.slots.map(slot => {
     const source = slot.source;
     let name;
     if (source.type === 'group') {
@@ -36,7 +36,10 @@ export function PatternListRow({ deck, pattern, index, isSelected, estimate,
         ?? deck.entries.find(entry => entry.cardId === source.cardId)?.name ?? '未取得カード';
     }
     return `${name} ×${slot.count}${slot.distinctNames ? '（種類違い）' : ''}`;
-  }).join(' + ') || 'スロットがありません';
+  }).join(' + ');
+  const conditionSummary = pattern.conditions.length > 0 ? `＋条件 ${pattern.conditions.length}` : '';
+  const summary = [slotSummary, conditionSummary].filter(Boolean).join(' ')
+    || 'スロットか条件を追加してください';
   let probability: ReactNode = '未計算';
   if (!pattern.enabled) probability = '無効';
   else if (estimate) probability = <EstimateValue estimate={estimate} />;

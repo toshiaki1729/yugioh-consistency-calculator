@@ -5,10 +5,11 @@ import type { Deck, Pattern } from '../../domain/types';
 import { useDispatch } from '../../state/store';
 import { Button } from '../common/Button';
 import { TextField } from '../common/TextField';
+import { PatternConditions } from './PatternConditions';
 import { SlotRow } from './SlotRow';
 import type { SlotOption } from './SlotRow';
 
-/** 選択中パターンの名前とスロットを編集する。 */
+/** 選択中パターンの名前・スロット・追加の条件を編集する。 */
 export function PatternEditor({ deck, pattern }: { deck: Deck; pattern: Pattern }) {
   const dispatch = useDispatch();
   const resolveCard = useResolveCard();
@@ -53,5 +54,6 @@ export function PatternEditor({ deck, pattern }: { deck: Deck; pattern: Pattern 
     {sources.length === 0 &&
       <p className="PatternsView-note">メインデッキにカードを追加して、スロットの対象を選んでください。</p>}
     <Button disabled={!canAddSlot} onClick={handleAddSlot}>スロットを追加</Button>
+    <PatternConditions pattern={pattern} sources={sources} />
   </section>;
 }

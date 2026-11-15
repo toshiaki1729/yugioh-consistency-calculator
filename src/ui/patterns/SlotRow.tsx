@@ -22,7 +22,8 @@ interface SlotRowProps {
 const slotCounts = Array.from({ length: MAX_SLOT_COUNT - MIN_SLOT_COUNT + 1 },
   (_, index) => index + MIN_SLOT_COUNT);
 
-function SlotSourceSelect({ source, sources, onChange }: {
+/** スロットと追加の条件に共通の対象を選ぶ。 */
+export function SlotSourceSelect({ source, sources, onChange }: {
   source: SlotSource; sources: SlotOption[]; onChange: (source: SlotSource) => void;
 }) {
   const value = source.type === 'group' ? `group:${source.groupId}` : `card:${source.cardId}`;

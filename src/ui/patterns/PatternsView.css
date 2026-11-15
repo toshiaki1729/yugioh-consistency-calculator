@@ -8,6 +8,8 @@
 .PatternsView-note { color: var(--text-muted); font-size: var(--font-size-small); }
 .PatternsView-warning { color: var(--warn); }
 .PatternsView-slot { margin: 0; padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); }
+.PatternsView-conditions, .PatternsView-condition-counts, .PatternsView-number { display: grid; gap: var(--space-2); min-width: 0; }
+.PatternsView-conditions > .Button { justify-self: start; }
 .EstimateValue { display: inline-flex; flex-direction: column; }
 .EstimateValue-interval { font-size: var(--font-size-small); }
 .EstimateValue-prominent { font-size: var(--font-size-result); font-weight: var(--font-weight-result); }
