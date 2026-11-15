@@ -1,4 +1,4 @@
-import { normalizeForMatch } from '../domain/normalize';
+import { normalizeForMatch, normalizeForSearch } from '../domain/normalize';
 import type { CardData, CardId } from '../domain/types';
 import type { CardDbFile } from './convert';
 import { searchCards } from './search';
@@ -30,7 +30,9 @@ export function createCardDb(file: CardDbFile): CardDb {
     const matches = byName.get(name);
     if (matches) matches.push(card);
     else byName.set(name, [card]);
-    index.push({ card, name, kana: normalizeForMatch(card.kana ?? '') });
+    index.push({
+      card, name: normalizeForSearch(card.name), kana: normalizeForSearch(card.kana ?? ''),
+    });
   }
   return {
     generatedAt: file.generatedAt,

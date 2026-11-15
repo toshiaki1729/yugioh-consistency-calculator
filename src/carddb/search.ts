@@ -1,9 +1,9 @@
-import { normalizeForMatch } from '../domain/normalize';
+import { normalizeForSearch } from '../domain/normalize';
 import type { CardData } from '../domain/types';
 
 const DEFAULT_SEARCH_LIMIT = 30;
 
-/** 正規化済みの名前と読みを持つ検索対象。 */
+/** normalizeForSearch で正規化した名前と読みを持つ検索対象。 */
 export interface CardSearchEntry {
   card: CardData;
   name: string;
@@ -14,14 +14,15 @@ export interface CardSearchEntry {
 export function searchCards(
   index: readonly CardSearchEntry[], query: string, limit = DEFAULT_SEARCH_LIMIT,
 ): CardData[] {
-  const normalized = normalizeForMatch(query);
+  const normalized = normalizeForSearch(query);
   if (!normalized || limit <= 0) return [];
   const prefix: CardData[] = [];
   const partial: CardData[] = [];
   for (const entry of index) {
-    const isPrefix = entry.name.startsWith(normalized) || entry.kana.startsWith(normalized);
-    if (isPrefix) prefix.push(entry.card);
-    else if (entry.name.includes(normalized) || entry.kana.includes(normalized)) {
+    const namePosition = entry.name.indexOf(normalized);
+    const kanaPosition = entry.kana.indexOf(normalized);
+    if (namePosition === 0 || kanaPosition === 0) prefix.push(entry.card);
+    else if (namePosition >= 0 || kanaPosition >= 0) {
       partial.push(entry.card);
     }
   }

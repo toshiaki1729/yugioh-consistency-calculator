@@ -1,9 +1,25 @@
 import type { CardData, CardGroup, CardId, FilterNode } from './types';
-import { escapeRegExp, normalizeForMatch } from './normalize';
+import { escapeRegExp, normalizeForMatch, normalizeKana } from './normalize';
 
 const normalizedCards = new WeakMap<CardData, {
   name: string; kana: string; text: string; pendulumText: string;
+  kanaName: string; kanaReading: string; kanaText: string;
 }>();
+const archetypeSuffix = escapeRegExp(normalizeKana('カードとしても扱う'));
+
+function getNormalizedCard(card: CardData) {
+  let normalized = normalizedCards.get(card);
+  if (!normalized) {
+    normalized = {
+      name: normalizeForMatch(card.name), kana: normalizeForMatch(card.kana ?? ''),
+      text: normalizeForMatch(card.text), pendulumText: normalizeForMatch(card.pendulumText ?? ''),
+      kanaName: normalizeKana(card.name), kanaReading: normalizeKana(card.kana ?? ''),
+      kanaText: normalizeKana(card.text),
+    };
+    normalizedCards.set(card, normalized);
+  }
+  return normalized;
+}
 
 /** カードが条件式を満たすか判定する。 */
 export function evaluateFilter(node: FilterNode, card: CardData): boolean {
@@ -30,21 +46,21 @@ export function evaluateFilter(node: FilterNode, card: CardData): boolean {
         && (predicate.range.max === undefined || value <= predicate.range.max);
     }
   }
-  let normalized = normalizedCards.get(card);
-  if (!normalized) {
-    normalized = {
-      name: normalizeForMatch(card.name), kana: normalizeForMatch(card.kana ?? ''),
-      text: normalizeForMatch(card.text), pendulumText: normalizeForMatch(card.pendulumText ?? ''),
-    };
-    normalizedCards.set(card, normalized);
+  const normalized = getNormalizedCard(card);
+  if (predicate.kind === 'nameContains' || predicate.kind === 'archetype') {
+    const keyword = normalizeKana(predicate.text);
+    if (!keyword) return false;
+    const hasName = normalized.kanaName.includes(keyword)
+      || normalized.kanaReading.includes(keyword);
+    if (hasName) return true;
+    return predicate.kind === 'archetype'
+      && new RegExp(`「[^」]*${escapeRegExp(keyword)}[^」]*」${archetypeSuffix}`)
+        .test(normalized.kanaText);
   }
   const keyword = normalizeForMatch(predicate.text);
   switch (predicate.kind) {
-    case 'nameContains': return normalized.name.includes(keyword);
     case 'textContains': return normalized.text.includes(keyword)
       || (predicate.includePendulum && normalized.pendulumText.includes(keyword));
-    case 'archetype': return normalized.name.includes(keyword) || normalized.kana.includes(keyword)
-      || new RegExp(`「[^」]*${escapeRegExp(keyword)}[^」]*」カードとしても扱う`).test(normalized.text);
     case 'mentionsName': {
       // 効果欄の境界をまたいだ引用を作らず、自己参照をすべて除いて調べる。
       const text = `${normalized.text}\n${normalized.pendulumText}`

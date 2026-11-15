@@ -89,7 +89,7 @@ describe('条件式', () => {
   it('テーマは名前・読み・テーマ扱いの記述で一致する', () => {
     expect(matches({ kind: 'archetype', text: '青眼' })).toBe(true);
     expect(matches({ kind: 'archetype', text: 'ブルーアイズ' })).toBe(true);
-    expect(matches({ kind: 'nameContains', text: 'ブルーアイズ' })).toBe(false);
+    expect(matches({ kind: 'nameContains', text: 'ブルーアイズ' })).toBe(true);
     expect(matches({ kind: 'archetype', text: 'Ｘ' }, { ...blueEyes, text: 'このカードはルール上「EXシリーズ」カードとしても扱う。' })).toBe(true);
     expect(matches({ kind: 'archetype', text: 'Ｘ' }, { ...blueEyes, text: '「EXシリーズ」モンスターとして扱う。' })).toBe(false);
   });
