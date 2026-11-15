@@ -1,2 +1,5 @@
 .duet/runs/
 .duet/state.json
+node_modules/
+dist/
+data-src/
