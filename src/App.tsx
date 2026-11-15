@@ -8,6 +8,9 @@ import type { CardDb, createCardDbLoader } from './carddb/loader';
 import { DeckHeader, NewDeckButton } from './ui/layout/DeckHeader';
 import { DeckView } from './ui/deck/DeckView';
 import { GroupsView } from './ui/groups/GroupsView';
+import { PatternsView } from './ui/patterns/PatternsView';
+import { CalculationProvider } from './ui/patterns/CalculationProvider';
+import type { EngineWorker } from './engine/client';
 import { EmptyState } from './ui/common/EmptyState';
 import { decodePayload } from './importer/payload';
 import type { ImportPayload } from './importer/payload';
@@ -48,7 +51,9 @@ function AppContent() {
           { id: 'groups', label: 'カードグループ', content: activeDeck
             ? <GroupsView key={activeDeck.id} deck={activeDeck} />
             : <EmptyState>デッキがありません</EmptyState> },
-          { id: 'patterns', label: '初動パターン' },
+          { id: 'patterns', label: '初動パターン', content: activeDeck
+            ? <PatternsView key={activeDeck.id} deck={activeDeck} />
+            : <EmptyState>デッキがありません</EmptyState> },
         ]}
       />
       {incoming && <ImportDialog key={incoming.id} payload={incoming.payload} onClose={() => setIncoming(null)}
@@ -58,10 +63,12 @@ function AppContent() {
   );
 }
 
-export default function App({ db, loader, ...stateProps }: Omit<AppStateProviderProps, 'children'> & {
-  db?: CardDb; loader?: ReturnType<typeof createCardDbLoader>;
+export default function App({ db, loader, createWorker, ...stateProps }: Omit<AppStateProviderProps, 'children'> & {
+  db?: CardDb; loader?: ReturnType<typeof createCardDbLoader>; createWorker?: () => EngineWorker;
 } = {}) {
   return <AppStateProvider {...stateProps}>
-    <CardDbProvider db={db} loader={loader}><AppContent /></CardDbProvider>
+    <CardDbProvider db={db} loader={loader}>
+      <CalculationProvider createWorker={createWorker}><AppContent /></CalculationProvider>
+    </CardDbProvider>
   </AppStateProvider>;
 }

@@ -1,0 +1,13 @@
+.PatternsView, .PatternsView-editor, .PatternsView-slot { display: grid; gap: var(--space-3); min-width: 0; overflow-wrap: anywhere; }
+.PatternsView > .Button, .PatternsView-editor > .Button { justify-self: start; }
+.PatternsView-list { display: grid; gap: var(--space-2); list-style: none; margin: 0; padding: 0; }
+.PatternsView-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius); }
+.PatternsView-choice { display: grid; flex: 1 1 200px; min-width: 0; height: auto; min-height: 40px; text-align: left; overflow-wrap: anywhere; }
+.PatternsView-choice[aria-pressed='true'] { background: var(--accent-weak); }
+.PatternsView-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.PatternsView-note { color: var(--text-muted); font-size: var(--font-size-small); }
+.PatternsView-warning { color: var(--warn); }
+.PatternsView-slot { margin: 0; padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); }
+.EstimateValue { display: inline-flex; flex-direction: column; }
+.EstimateValue-interval { font-size: var(--font-size-small); }
+.EstimateValue-prominent { font-size: var(--font-size-result); font-weight: var(--font-weight-result); }

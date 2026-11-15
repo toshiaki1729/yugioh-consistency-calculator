@@ -37,6 +37,7 @@ export type Action =
   | { type: 'group/edit'; groupId: string; changes: Partial<Omit<CardGroup, 'id'>> }
   | { type: 'group/delete'; groupId: string }
   | { type: 'pattern/create'; name?: string }
+  | { type: 'pattern/duplicate'; patternId: string }
   | { type: 'pattern/edit'; patternId: string; changes: Partial<Pick<Pattern, 'name' | 'enabled'>> }
   | { type: 'pattern/delete'; patternId: string }
   | { type: 'pattern/toggle'; patternId: string }
@@ -201,6 +202,13 @@ export function createReducer(
         case 'pattern/create':
           deck.patterns.push({ id: newId(), name: action.name ?? '新しいパターン', enabled: true, slots: [] });
           break;
+        case 'pattern/duplicate': {
+          const pattern = deck.patterns.find(item => item.id === action.patternId);
+          if (!pattern) return { ...state, lastError: '対象のパターンがありません。' };
+          deck.patterns.push({ ...structuredClone(pattern), id: newId(), name: `${pattern.name.slice(0, 46)}のコピー`,
+            slots: pattern.slots.map(slot => ({ ...structuredClone(slot), id: newId() })) });
+          break;
+        }
         case 'pattern/delete': deck.patterns = deck.patterns.filter(pattern => pattern.id !== action.patternId); break;
         case 'pattern/reorder': {
           const patterns = new Map(deck.patterns.map(pattern => [pattern.id, pattern]));

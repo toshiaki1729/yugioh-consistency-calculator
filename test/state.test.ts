@@ -238,6 +238,29 @@ describe('状態の編集', () => {
     expect(h.state.lastError).toBe('対象のグループがありません。');
   });
 
+  it('パターンの複製はスロットも別IDにし、対象・必要枚数・種類違い・有効状態を保持する', () => {
+    const initial = app();
+    initial.decks[0].patterns[0] = { ...pattern(), name: 'あ'.repeat(50), enabled: false,
+      slots: [{ ...slot(), count: 2, distinctNames: true }, { ...slot('s2'), source: { type: 'card', cardId: 'k1' } }] };
+    const h = harness(initial);
+    const original = structuredClone(h.deck.patterns[0]);
+    h.send({ type: 'pattern/duplicate', patternId: 'p1' });
+    expect(h.state.lastError).toBeNull();
+    const copy = h.deck.patterns[1];
+    expect(copy.id).not.toBe(original.id);
+    expect(copy.name).toHaveLength(50);
+    expect(copy.name.endsWith('のコピー')).toBe(true);
+    expect(copy.enabled).toBe(false);
+    expect(new Set(h.deck.patterns.flatMap(p => p.slots.map(s => s.id))).size).toBe(4);
+    expect(copy.slots.map(({ id: _, ...s }) => s)).toEqual(original.slots.map(({ id: _, ...s }) => s));
+    h.send({ type: 'slot/edit', patternId: copy.id, slotId: copy.slots[0].id, changes: { count: 3 } });
+    expect(h.deck.patterns[0]).toEqual(original);
+    const before = h.state.app;
+    h.send({ type: 'pattern/duplicate', patternId: 'missing' });
+    expect(h.state.app).toBe(before);
+    expect(h.state.lastError).toBe('対象のパターンがありません。');
+  });
+
   it('パターンとスロットを編集し、有効切替・並べ替え・設定変更を行う', () => {
     const h = harness();
     h.send({ type: 'pattern/create', name: '二つ目' });
@@ -269,6 +292,7 @@ describe('上限とエラー時の原子性', () => {
     ['グループ', (a: AppState) => { a.decks[0].groups = Array.from({ length: 200 }, (_, i) => group(`g${i}`)); }, { type: 'group/create' }],
     ['グループの複製', (a: AppState) => { a.decks[0].groups = Array.from({ length: 200 }, (_, i) => group(`g${i}`)); }, { type: 'group/duplicate', groupId: 'g1' }],
     ['パターン', (a: AppState) => { a.decks[0].patterns = Array.from({ length: 200 }, (_, i) => pattern(`p${i}`, [])); }, { type: 'pattern/create' }],
+    ['パターンの複製', (a: AppState) => { a.decks[0].patterns = Array.from({ length: 200 }, (_, i) => pattern(`p${i}`, [])); }, { type: 'pattern/duplicate', patternId: 'p1' }],
     ['カスタムカード', (a: AppState) => { a.decks[0].customCards = Array.from({ length: 200 }, (_, i) => card(`c:${i}`)); }, { type: 'customCard/add', card: { name: '追加', kind: 'trap', monsterTypes: [], text: '' } }],
     ['スロット', (a: AppState) => { a.decks[0].patterns[0].slots = Array.from({ length: 8 }, (_, i) => slot(`s${i}`)); }, { type: 'slot/add', patternId: 'p1', slot: { source: { type: 'group', groupId: 'g1' }, count: 1, distinctNames: false } }],
   ] satisfies [string, (state: AppState) => void, Action][])('%s の上限を超える追加は app の参照も内容も変えない', (_, prepare, action) => {
