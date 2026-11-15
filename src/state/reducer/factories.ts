@@ -15,7 +15,7 @@ export function createEmptyDeck(
   name = '新しいデッキ',
 ): Deck {
   return {
-    id: newId(), name, entries: [], groups: [], patterns: [],
+    id: newId(), name, entries: [], groups: [], patterns: [], effects: [],
     customCards: [], pageData: {}, updatedAt: now(),
   };
 }
@@ -44,6 +44,17 @@ export function copyDeckWithNewIds(deck: Deck, newId: () => string): Deck {
     for (const slot of pattern.slots) {
       slot.id = newId();
       if (slot.source.type === 'group') slot.source.groupId = groupIds.get(slot.source.groupId)!;
+    }
+    for (const condition of pattern.conditions) {
+      const target = condition.target;
+      if (target.type === 'group') target.groupId = groupIds.get(target.groupId)!;
+    }
+  }
+  for (const effect of copy.effects) {
+    effect.id = newId();
+    for (const step of effect.steps) {
+      if (!('target' in step) || step.target?.type !== 'group') continue;
+      step.target.groupId = groupIds.get(step.target.groupId)!;
     }
   }
   return copy;

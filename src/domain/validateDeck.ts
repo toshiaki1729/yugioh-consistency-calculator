@@ -1,15 +1,20 @@
 import {
-  failValidation, decodeObject, readFields, createShapeDecoder, createIntegerDecoder,
+  failValidation, decodeObject, createShapeDecoder, createIntegerDecoder,
   createChoiceDecoder, createArrayDecoder, decodeId, decodeBoolean,
 } from './decoder';
 import type { Decoder } from './decoder';
 import * as limits from './limits';
 import type {
-  CardData, CardGroup, Deck, DeckEntry, Pattern, Result, Slot, SlotSource,
+  CardData, CardGroup, Deck, DeckEntry, Pattern, Result, Slot,
 } from './types';
-import { decodeTitle, decodeCardId, decodeCardName, decodeIds } from './validationFields';
+import {
+  decodeTitle, decodeCardId, decodeCardName, decodeIds, decodeSource,
+} from './validationFields';
 import { validateCardData } from './validateCard';
 import { validateFilter } from './validateFilter';
+import { decodeConditions, decodeEffects } from './validateEffects';
+import { checkDeckReferences } from './validateReferences';
+import type { DroppedReferences } from './validateReferences';
 
 const decodeEntry: Decoder<DeckEntry> = createShapeDecoder({
   cardId: decodeCardId, name: decodeCardName,
@@ -19,19 +24,6 @@ const decodeEntry: Decoder<DeckEntry> = createShapeDecoder({
 const decodeGroup: Decoder<CardGroup> = createShapeDecoder({
   id: decodeId, name: decodeTitle, filter: validateFilter, include: decodeIds, exclude: decodeIds,
 }, true);
-const decodeSource: Decoder<SlotSource> = (value, path) => {
-  const record = decodeObject(value, path);
-  if (!record.ok) return record;
-  switch (record.value.type) {
-    case 'group': return readFields({
-      type: createChoiceDecoder(['group']), groupId: decodeId,
-    }, record.value, path);
-    case 'card': return readFields({
-      type: createChoiceDecoder(['card']), cardId: decodeCardId,
-    }, record.value, path);
-    default: return failValidation(`${path}.type`, '対象は group / card のいずれかで指定してください');
-  }
-};
 const decodeSlot: Decoder<Slot> = createShapeDecoder({
   id: decodeId, source: decodeSource,
   count: createIntegerDecoder(limits.MIN_SLOT_COUNT, limits.MAX_SLOT_COUNT, '必要枚数'),
@@ -39,7 +31,7 @@ const decodeSlot: Decoder<Slot> = createShapeDecoder({
 });
 const decodePattern: Decoder<Pattern> = createShapeDecoder({
   id: decodeId, name: decodeTitle, enabled: decodeBoolean,
-  slots: createArrayDecoder(decodeSlot, limits.MAX_SLOTS),
+  slots: createArrayDecoder(decodeSlot, limits.MAX_SLOTS), conditions: decodeConditions,
 }, true);
 const decodePageData: Decoder<Record<string, CardData>> = (value, path) => {
   const record = decodeObject(value, path);
@@ -86,7 +78,7 @@ const decodeDeckData: Decoder<Deck> = createShapeDecoder({
   id: decodeId, name: decodeTitle,
   entries: createArrayDecoder(decodeEntry, limits.MAX_ENTRIES),
   groups: createArrayDecoder(decodeGroup, limits.MAX_GROUPS),
-  patterns: createArrayDecoder(decodePattern, limits.MAX_PATTERNS),
+  patterns: createArrayDecoder(decodePattern, limits.MAX_PATTERNS), effects: decodeEffects,
   customCards: createArrayDecoder(decodeCustomCard, limits.MAX_CUSTOM_CARDS),
   pageData: decodePageData, updatedAt: decodeTimestamp,
 }, true);
@@ -104,7 +96,7 @@ export function validateUniqueIds(items: { id: string }[], path: string): Result
 /** デッキの項目と参照整合性を検証し、復元時の削除件数も返す。 */
 export function readDeck(
   value: unknown, path: string, shouldDropDanglingSlots: boolean,
-): Result<{ deck: Deck; droppedSlots: number }> {
+): Result<{ deck: Deck } & DroppedReferences> {
   const parsed = decodeDeckData(value, path);
   if (!parsed.ok) return parsed;
   const deck = parsed.value;
@@ -113,7 +105,8 @@ export function readDeck(
   if (!groups.ok) return groups;
   for (const [label, items] of [
     ['パターン', deck.patterns], ['スロット', deck.patterns.flatMap(item => item.slots)],
-    ['カスタムカード', deck.customCards],
+    ['カスタムカード', deck.customCards], ['ドロー効果', deck.effects],
+    ['ドロー効果のカード', deck.effects.map(effect => ({ id: effect.cardId }))],
   ] as const) {
     const unique = validateUniqueIds(items, `${location}の${label}`);
     if (!unique.ok) return unique;
@@ -125,32 +118,6 @@ export function readDeck(
     if (entries.has(key)) return failValidation(`${location}のエントリ ${i + 1}`, '同じ区分のカードが重複しています');
     entries.add(key);
   }
-  let droppedSlots = 0;
-  for (const item of deck.patterns) {
-    const checked = checkSlotReferences(item, groups.value, location, shouldDropDanglingSlots);
-    if (!checked.ok) return checked;
-    droppedSlots += checked.value;
-  }
-  return { ok: true, value: { deck, droppedSlots } };
+  const checked = checkDeckReferences(deck, groups.value, location, shouldDropDanglingSlots);
+  return checked.ok ? { ok: true, value: { deck, ...checked.value } } : checked;
 }
-
-function checkSlotReferences(
-  pattern: Pattern, groupIds: Set<string>, location: string, shouldDropDanglingSlots: boolean,
-): Result<number> {
-  const slots: Slot[] = [];
-  let droppedSlots = 0;
-  for (const candidate of pattern.slots) {
-    if (candidate.source.type !== 'group' || groupIds.has(candidate.source.groupId)) {
-      slots.push(candidate);
-      continue;
-    }
-    if (!shouldDropDanglingSlots) return failValidation(
-      `${location}のパターン『${pattern.name}』のスロット『${candidate.id}』`,
-      `参照先のグループ『${candidate.source.groupId}』がありません`,
-    );
-    droppedSlots++;
-  }
-  pattern.slots = slots;
-  return { ok: true, value: droppedSlots };
-}
-

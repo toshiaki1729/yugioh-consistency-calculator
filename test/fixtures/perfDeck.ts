@@ -32,7 +32,7 @@ const patternSlots: Slot[][] = [
 ];
 const patterns: Pattern[] = patternSlots.map((slots, i) => ({
   id: `P${i + 1}`, name: `P${i + 1}`, enabled: true,
-  slots: slots.map((slot, j) => ({ ...slot, id: `P${i + 1}:S${j + 1}` })),
+  slots: slots.map((slot, j) => ({ ...slot, id: `P${i + 1}:S${j + 1}` })), conditions: [],
 }));
 
 export const perfDeck: Deck = {
@@ -40,5 +40,5 @@ export const perfDeck: Deck = {
   entries: perfCards.map((card, i) => ({
     cardId: card.id, name: card.name, count: i < 5 ? 3 : i < 10 ? 2 : 1, section: 'main',
   })),
-  groups, patterns, customCards: [], pageData: {}, updatedAt: 0,
+  groups, patterns, effects: [], customCards: [], pageData: {}, updatedAt: 0,
 };

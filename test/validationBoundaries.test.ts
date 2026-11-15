@@ -22,10 +22,10 @@ const makeDeck = (): Deck => ({
   groups: [{ id: 'g1', name: '対象', filter: { op: 'and', children: [] }, include: [], exclude: [] }],
   patterns: [{ id: 'p1', name: '初動', enabled: true, slots: [
     { id: 's1', source: { type: 'card', cardId: 'k1' }, count: 1, distinctNames: false },
-  ] }],
+  ], conditions: [] }],
 });
 const makeState = (deck: Deck): AppState => ({
-  schemaVersion: 1, decks: [deck], activeDeckId: deck.id, settings: { customHandSize: null },
+  schemaVersion: 2, decks: [deck], activeDeckId: deck.id, settings: { customHandSize: null },
 });
 
 function valid<T>(result: Result<T>): T {

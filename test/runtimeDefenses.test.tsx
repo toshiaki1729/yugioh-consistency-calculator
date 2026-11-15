@@ -26,7 +26,7 @@ function createState() {
   state.decks[0].entries = [{ cardId: card.id, name: card.name, count: 40, section: 'main' }];
   state.decks[0].patterns = [{ id: 'p1', name: '初動', enabled: true, slots: [
     { id: 's1', source: { type: 'card', cardId: card.id }, count: 1, distinctNames: false },
-  ] }];
+  ], conditions: [] }];
   return state;
 }
 
@@ -141,7 +141,7 @@ describe('パターン結果の自身のプロパティ参照', () => {
   it('結果にない継承プロパティ名のパターンは両方の一覧で未計算と表示する', async () => {
     const state = createState();
     state.decks[0].patterns.push(...['toString', '__proto__', 'constructor'].map(id => ({
-      id, name: id, enabled: true, slots: [],
+      id, name: id, enabled: true, slots: [], conditions: [],
     })));
     const worker = new FakeEngineWorker();
     render(<App db={db} storage={createStorage(state)} createWorker={() => worker} />);

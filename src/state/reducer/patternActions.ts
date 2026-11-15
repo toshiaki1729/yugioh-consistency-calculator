@@ -6,7 +6,9 @@ import { createCopyName } from './factories';
 export function createPattern(
   deck: Deck, action: ActionOf<'pattern/create'>, newId: () => string,
 ): void {
-  deck.patterns.push({ id: newId(), name: action.name ?? '新しいパターン', enabled: true, slots: [] });
+  deck.patterns.push({
+    id: newId(), name: action.name ?? '新しいパターン', enabled: true, slots: [], conditions: [],
+  });
 }
 
 /** パターンと各スロットを別 ID で複製する。 */

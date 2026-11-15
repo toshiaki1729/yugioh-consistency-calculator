@@ -25,7 +25,7 @@ function groupSlot(groupId: string, count = 1, distinctNames = false): Slot {
 }
 
 function pattern(id: string, slots: Slot[]): Pattern {
-  return { id, name: id, enabled: true, slots: slots.map((slot, i) => ({ ...slot, id: `${id}:${i}` })) };
+  return { id, name: id, enabled: true, slots: slots.map((slot, i) => ({ ...slot, id: `${id}:${i}` })), conditions: [] };
 }
 
 function group(id: string, cardIds: string[]): CardGroup {
@@ -39,7 +39,7 @@ function makeDeck(counts: Record<string, number>, patterns: Pattern[], groups: C
   return {
     id: 'deck', name: 'テスト',
     entries: cards.map(card => ({ cardId: card.id, name: card.name, count: counts[card.id], section: 'main' })),
-    patterns, groups, customCards: cards, pageData: {}, updatedAt: 0,
+    patterns, groups, effects: [], customCards: cards, pageData: {}, updatedAt: 0,
   };
 }
 

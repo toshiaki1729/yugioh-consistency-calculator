@@ -91,7 +91,7 @@ describe('デッキの取り込み画面', () => {
   });
 
   it('デッキが0件でも貼り付けから新規作成でき、置き換えは禁止する', async () => {
-    const state: AppState = { schemaVersion: 1, decks: [], activeDeckId: null, settings: { customHandSize: null } };
+    const state: AppState = { schemaVersion: 2, decks: [], activeDeckId: null, settings: { customHandSize: null } };
     const user = setup({ state });
     fireEvent.change(screen.getByLabelText(pasteLabel), { target: { value: 'メイン\n3 灰流うらら\nエクストラ\n2 灰流うらら\nサイド\n1 灰流うらら' } });
     await user.click(screen.getByRole('button', { name: '取り込む' }));

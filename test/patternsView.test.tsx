@@ -20,7 +20,7 @@ const percent = new Intl.NumberFormat('ja-JP', { style: 'percent', minimumFracti
 const pattern = (): Pattern => ({ id: 'p1', name: '二枚初動', enabled: true, slots: [
   { id: 's1', source: { type: 'group', groupId: 'g1' }, count: 1, distinctNames: false },
   { id: 's2', source: { type: 'card', cardId: 'k12950' }, count: 1, distinctNames: false },
-] });
+], conditions: [] });
 
 function initialState(withPattern = true) {
   const state = createInitialState({ newId: () => 'deck-a' });

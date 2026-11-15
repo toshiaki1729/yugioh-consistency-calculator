@@ -81,8 +81,36 @@ export interface CardGroup {
 export type SlotSource = { type: 'group'; groupId: string } | { type: 'card'; cardId: CardId };
 /** 初動に必要な対象・枚数・種類違いの指定。 */
 export interface Slot { id: string; source: SlotSource; count: number; distinctNames: boolean }
-/** 同時に満たすスロットからなる初動パターン。 */
-export interface Pattern { id: string; name: string; enabled: boolean; slots: Slot[] }
+/** 同時に満たすスロットと追加の条件からなる初動パターン。 */
+export interface Pattern {
+  id: string; name: string; enabled: boolean; slots: Slot[]; conditions: PatternCondition[];
+}
+/** 条件や効果が対象とするカードまたはグループ。 */
+export type CardTarget = SlotSource;
+/** ドロー効果の手順でカードを送った先。 */
+export type MoveZone = 'graveyard' | 'banishedFaceUp' | 'banishedFaceDown';
+/** 初動パターンの成立に必要な追加の条件。 */
+export type PatternCondition =
+  | { kind: 'deckAtLeast'; target: CardTarget; count: number }
+  | { kind: 'movedExcludes'; zones: MoveZone[]; target: CardTarget }
+  | { kind: 'movedIncludes'; zones: MoveZone[]; target: CardTarget }
+  | { kind: 'deckAfterBanish'; banish: number; target: CardTarget; count: number };
+/** 手札から使う効果の制限と処理手順。 */
+export interface DrawEffect {
+  id: string;
+  cardId: CardId;
+  oncePerTurn: boolean;
+  firstOnly: boolean;
+  drawLock: 'none' | 'after' | 'turn';
+  steps: EffectStep[];
+}
+/** ドロー効果を構成する一つの処理。 */
+export type EffectStep =
+  | { kind: 'draw'; count: number }
+  | { kind: 'banishTop'; count: number }
+  | { kind: 'excavate'; count: number; target: CardTarget | null }
+  | { kind: 'search'; target: CardTarget }
+  | { kind: 'handCost'; target: CardTarget; destination: 'graveyard' | 'banishedFaceUp' };
 /** カードと初動条件をまとめた保存対象のデッキ。 */
 export interface Deck {
   id: string;
@@ -90,13 +118,14 @@ export interface Deck {
   entries: DeckEntry[];
   groups: CardGroup[];
   patterns: Pattern[];
+  effects: DrawEffect[];
   customCards: CardData[];
   pageData: Record<CardId, CardData>;
   updatedAt: number;
 }
 /** 保存対象の全デッキとアプリ設定。 */
 export interface AppState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   decks: Deck[];
   activeDeckId: string | null;
   settings: { customHandSize: number | null };

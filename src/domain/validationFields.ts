@@ -4,9 +4,26 @@ import {
 import {
   createStringDecoder, createIntegerDecoder, createEnumDecoder, createArrayDecoder,
   createUniqueArrayDecoder, failValidation,
+  decodeObject, readFields, createChoiceDecoder, decodeId,
 } from './decoder';
 import type { Decoder } from './decoder';
+import type { CardTarget } from './types';
 import * as limits from './limits';
+
+/** スロット・条件・手順で共通のカード対象を読み取る。 */
+export const decodeSource: Decoder<CardTarget> = (value, path) => {
+  const record = decodeObject(value, path);
+  if (!record.ok) return record;
+  switch (record.value.type) {
+    case 'group': return readFields({
+      type: createChoiceDecoder(['group']), groupId: decodeId,
+    }, record.value, path);
+    case 'card': return readFields({
+      type: createChoiceDecoder(['card']), cardId: decodeCardId,
+    }, record.value, path);
+    default: return failValidation(`${path}.type`, '対象は group / card のいずれかで指定してください');
+  }
+};
 
 /** 公式カードまたはカスタムカードの ID を読み取る。 */
 export const decodeCardId: Decoder<string> = (value, path) => {

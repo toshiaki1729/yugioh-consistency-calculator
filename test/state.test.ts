@@ -10,12 +10,12 @@ const card = (id = 'c:one'): CardData => ({ id, name: 'カード', kind: 'monste
 const entry = (cardId = 'k1', count = 3, section: DeckEntry['section'] = 'main'): DeckEntry => ({ cardId, name: 'カード', count, section });
 const group = (id = 'g1'): CardGroup => ({ id, name: 'グループ', filter: { op: 'and', children: [] }, include: [], exclude: [] });
 const slot = (id = 's1'): Slot => ({ id, source: { type: 'group', groupId: 'g1' }, count: 1, distinctNames: false });
-const pattern = (id = 'p1', slots = [slot()]): Pattern => ({ id, name: '初動', enabled: true, slots });
+const pattern = (id = 'p1', slots = [slot()]): Pattern => ({ id, name: '初動', enabled: true, slots, conditions: [] });
 const deck = (): Deck => ({
   id: 'd1', name: 'テストデッキ', entries: [entry()], groups: [group()], patterns: [pattern()],
-  customCards: [card()], pageData: { k2: { ...card('k2'), custom: false } }, updatedAt: 10,
+  effects: [], customCards: [card()], pageData: { k2: { ...card('k2'), custom: false } }, updatedAt: 10,
 });
-const app = (): AppState => ({ schemaVersion: 1, decks: [deck()], activeDeckId: 'd1', settings: { customHandSize: null } });
+const app = (): AppState => ({ schemaVersion: 2, decks: [deck()], activeDeckId: 'd1', settings: { customHandSize: null } });
 const ids = () => { let n = 0; return () => `new-${++n}`; };
 
 function value<T>(result: Result<T>): T {
@@ -134,8 +134,8 @@ describe('状態の編集', () => {
   it('初回は空の「新しいデッキ」を選択し、ID と時刻を注入できる', () => {
     const state = createInitialState({ newId: () => 'first', now: () => 42 });
     expect(state).toEqual({
-      schemaVersion: 1, activeDeckId: 'first', settings: { customHandSize: null },
-      decks: [{ id: 'first', name: '新しいデッキ', entries: [], groups: [], patterns: [], customCards: [], pageData: {}, updatedAt: 42 }],
+      schemaVersion: 2, activeDeckId: 'first', settings: { customHandSize: null },
+      decks: [{ id: 'first', name: '新しいデッキ', entries: [], groups: [], patterns: [], effects: [], customCards: [], pageData: {}, updatedAt: 42 }],
     });
   });
 
@@ -475,7 +475,7 @@ describe('復元とデバウンス保存', () => {
     expect(loadState(storage)).toEqual({ state: app(), notice: null, saveBlocked: false });
   });
 
-  it.each(['{broken', JSON.stringify({ ...app(), schemaVersion: 2 }), JSON.stringify({ ...app(), settings: { customHandSize: 11 } })])('破損・版不一致・検証失敗では元の文字列を退避する', raw => {
+  it.each(['{broken', JSON.stringify({ ...app(), schemaVersion: 3 }), JSON.stringify({ ...app(), settings: { customHandSize: 11 } })])('破損・版不一致・検証失敗では元の文字列を退避する', raw => {
     const storage = new FakeStorage();
     storage.data.set(STORAGE_KEY, raw);
     const loaded = loadState(storage, { newId: () => 'first', now: () => 99 });
@@ -572,7 +572,7 @@ describe('デッキ JSON', () => {
     const original = deck();
     original.patterns[0].slots.push({ ...slot('s2'), source: { type: 'card', cardId: 'c:one' } });
     const text = exportDeckJson(original);
-    expect(JSON.parse(text)).toEqual({ format: 'shodou-calc-deck', version: 1, deck: original });
+    expect(JSON.parse(text)).toEqual({ format: 'shodou-calc-deck', version: 2, deck: original });
     const restored = value(importDeckJson(text, ids()));
     const normalized = structuredClone(restored);
     normalized.id = original.id;
@@ -593,7 +593,7 @@ describe('デッキ JSON', () => {
     expect(h.deck.updatedAt).toBe(1234);
   });
 
-  it.each(['{broken', 'null', '[]', '{}', JSON.stringify({ format: 'shodou-calc-deck', version: 2, deck: deck() }), JSON.stringify({ format: 'other', version: 1, deck: deck() })])('不正JSON・形式・版を拒否する', text => {
+  it.each(['{broken', 'null', '[]', '{}', JSON.stringify({ format: 'shodou-calc-deck', version: 3, deck: deck() }), JSON.stringify({ format: 'other', version: 1, deck: deck() })])('不正JSON・形式・版を拒否する', text => {
     const newId = vi.fn(ids());
     expect(importDeckJson(text, newId).ok).toBe(false);
     expect(newId).not.toHaveBeenCalled();

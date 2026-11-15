@@ -229,7 +229,7 @@ describe('ヘッダー', () => {
     const state = createInitialState();
     state.decks[0].patterns = [{ id: 'p', name: '参照切れ', enabled: true, slots: [
       { id: 's', source: { type: 'group', groupId: 'missing' }, count: 1, distinctNames: false },
-    ] }];
+    ], conditions: [] }];
     state.decks[0].entries = [{ cardId: 'k12950', name: '灰流うらら', count: 60, section: 'main' }];
     const { user } = setup({ state });
     expect(screen.getByText(/スロットを 1 件削除/)).toBeVisible();

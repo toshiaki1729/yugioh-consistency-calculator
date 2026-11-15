@@ -116,5 +116,34 @@ export const MIN_TIMESTAMP = 0;
 /** 読み込める JSON ファイルの最大バイト数。 */
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
 /** 保存状態の対応スキーマ版。 */
-export const APP_SCHEMA_VERSION = 1;
+export const APP_SCHEMA_VERSION = 2;
+
+/** パターンに指定できる追加の条件数の上限。 */
+export const MAX_PATTERN_CONDITIONS = 8;
+/** デッキに定義できるドロー効果数の上限。 */
+export const MAX_DRAW_EFFECTS = 30;
+/** 効果に必要な手順数の下限。 */
+export const MIN_EFFECT_STEPS = 1;
+/** 効果に指定できる手順数の上限。 */
+export const MAX_EFFECT_STEPS = 6;
+/** 移動先の指定数の下限。 */
+export const MIN_MOVE_ZONES = 1;
+/** 移動先の指定数の上限。 */
+export const MAX_MOVE_ZONES = 3;
+/** デッキに残る必要枚数の下限。 */
+export const MIN_REMAINING_COUNT = 1;
+/** デッキに残る必要枚数の上限。 */
+export const MAX_REMAINING_COUNT = 60;
+/** 条件・手順でデッキの上から除外する枚数の下限。 */
+export const MIN_BANISH_COUNT = 1;
+/** 条件・手順でデッキの上から除外する枚数の上限。 */
+export const MAX_BANISH_COUNT = 20;
+/** 一つの手順でドローする枚数の下限。 */
+export const MIN_DRAW_COUNT = 1;
+/** 一つの手順でドローする枚数の上限。 */
+export const MAX_DRAW_COUNT = 5;
+/** 一つの手順でめくる枚数の下限。 */
+export const MIN_EXCAVATE_COUNT = 1;
+/** 一つの手順でめくる枚数の上限。 */
+export const MAX_EXCAVATE_COUNT = 10;
 

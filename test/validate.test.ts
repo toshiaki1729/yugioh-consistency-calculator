@@ -5,12 +5,12 @@ import type { AppState, CardData, CardGroup, Deck, FilterNode, Pattern, Predicat
 const card = (id = 'k1'): CardData => ({ id, name: 'カード', kind: 'monster', monsterTypes: ['effect'], text: '' });
 const group = (id = 'g1'): CardGroup => ({ id, name: 'グループ', filter: { op: 'and', children: [] }, include: [], exclude: [] });
 const slot = (id = 's1'): Slot => ({ id, source: { type: 'group', groupId: 'g1' }, count: 1, distinctNames: false });
-const pattern = (id = 'p1'): Pattern => ({ id, name: 'パターン', enabled: true, slots: [slot()] });
+const pattern = (id = 'p1'): Pattern => ({ id, name: 'パターン', enabled: true, slots: [slot()], conditions: [] });
 const deck = (id = 'd1'): Deck => ({
   id, name: 'デッキ', entries: [{ cardId: 'k1', name: 'カード', section: 'main', count: 3 }],
-  groups: [group()], patterns: [pattern()], customCards: [], pageData: {}, updatedAt: 0,
+  groups: [group()], patterns: [pattern()], effects: [], customCards: [], pageData: {}, updatedAt: 0,
 });
-const state = (): AppState => ({ schemaVersion: 1, decks: [deck()], activeDeckId: 'd1', settings: { customHandSize: null } });
+const state = (): AppState => ({ schemaVersion: 2, decks: [deck()], activeDeckId: 'd1', settings: { customHandSize: null } });
 const pred = (value: Predicate): FilterNode => ({ op: 'pred', pred: value });
 
 function valid<T>(result: Result<T>): T {
@@ -277,7 +277,7 @@ describe('アプリ状態と復元', () => {
     for (const value of [null, 1, 10]) valid(validateAppState({ ...state(), settings: { customHandSize: value } }));
     for (const value of [0, 11, 1.5, '5', undefined, NaN]) invalid(validateAppState({ ...state(), settings: { customHandSize: value } }), 'customHandSize');
   });
-  it.each([null, [], {}, { ...state(), schemaVersion: 2 }, { ...state(), schemaVersion: '1' }, { ...state(), settings: null }, { ...state(), activeDeckId: 1 }])('不正な状態を拒否する: %j', value => invalid(validateAppState(value)));
+  it.each([null, [], {}, { ...state(), schemaVersion: 3 }, { ...state(), schemaVersion: '1' }, { ...state(), settings: null }, { ...state(), activeDeckId: 1 }])('不正な状態を拒否する: %j', value => invalid(validateAppState(value)));
   it('復元モードだけが参照切れのグループスロットを削除し、複数デッキの件数を返す', () => {
     const input = state();
     input.decks.push(deck('d2'));

@@ -126,9 +126,9 @@ describe('カードグループ画面', () => {
     deck.patterns = [{ id: 'p1', name: '二枚初動', enabled: true, slots: [
       { id: 's1', source: { type: 'group', groupId: 'g1' }, count: 1, distinctNames: false },
       { id: 's2', source: { type: 'card', cardId: 'k12950' }, count: 1, distinctNames: false },
-    ] }, { id: 'p2', name: '無効な初動', enabled: false, slots: [
+    ], conditions: [] }, { id: 'p2', name: '無効な初動', enabled: false, slots: [
       { id: 's3', source: { type: 'group', groupId: 'g1' }, count: 1, distinctNames: false },
-    ] }];
+    ], conditions: [] }];
     const { user, storage } = await setup(state);
     await user.click(screen.getByRole('button', { name: '削除' }));
     let dialog = within(screen.getByRole('dialog', { name: 'グループを削除' }));
@@ -182,7 +182,7 @@ describe('カードグループ画面', () => {
   });
 
   it('アクティブデッキがなければ空状態を表示する', async () => {
-    await setup({ schemaVersion: 1, decks: [], activeDeckId: null, settings: { customHandSize: null } });
+    await setup({ schemaVersion: 2, decks: [], activeDeckId: null, settings: { customHandSize: null } });
     expect(within(screen.getByRole('tabpanel', { name: 'カードグループ' })).getByText('デッキがありません。新規デッキを作成してください。')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'グループを作成' })).not.toBeInTheDocument();
   });

@@ -1,16 +1,20 @@
 import { MAX_FILE_BYTES } from '../domain/limits';
 
 import type { AppState, Deck, Result } from '../domain/types';
-import { validateAppState, validateDeck } from '../domain/validate';
+import { validateDeck } from '../domain/validate';
+import { createRestoreNotice, readStoredState } from './restoreState';
 import { copyDeckWithNewIds, createInitialState } from './reducer';
 import type { StateDependencies } from './reducer';
 
 const SAVE_DELAY_MS = 500;
-const DECK_FILE_VERSION = 1;
+const DECK_FILE_VERSION = 2;
+const LEGACY_DECK_FILE_VERSION = 1;
 const JSON_INDENT_SPACES = 2;
 
 /** アプリ状態の保存先キー。 */
-export const STORAGE_KEY = 'shodou-calc:v1';
+export const STORAGE_KEY = 'shodou-calc:v2';
+/** 移行元としてのみ読み取る旧版の保存先キー。 */
+export const LEGACY_STORAGE_KEY = 'shodou-calc:v1';
 export { MAX_FILE_BYTES } from '../domain/limits';
 /** 自動保存と復元に必要なストレージ操作。 */
 export type StateStorage = Pick<Storage, 'getItem' | 'setItem'>;
@@ -27,35 +31,33 @@ export function loadState(
   onRead?: (storedText: string | null) => void,
 ): { state: AppState; notice: string | null; saveBlocked: boolean } {
   let original: string | null;
+  let sourceKey = STORAGE_KEY;
   try {
     original = storage.getItem(STORAGE_KEY);
+    onRead?.(original);
+    if (original === null) {
+      sourceKey = LEGACY_STORAGE_KEY;
+      original = storage.getItem(LEGACY_STORAGE_KEY);
+    }
   } catch (error) {
     return {
       state: createInitialState(dependencies), saveBlocked: true,
       notice: `保存データを読み取れませんでした。自動保存を停止しています。JSON で書き出してください。${getErrorMessage(error)}`,
     };
   }
-  onRead?.(original);
   if (original === null) return {
     state: createInitialState(dependencies), notice: null, saveBlocked: false,
   };
 
-  let parsed: Result<unknown>;
-  try {
-    parsed = { ok: true, value: JSON.parse(original) as unknown };
-  } catch {
-    parsed = { ok: false, error: '保存データの JSON が壊れています。' };
-  }
-  const checked = parsed.ok ? validateAppState(parsed.value, { dropDanglingSlots: true }) : parsed;
+  const checked = readStoredState(original, sourceKey === LEGACY_STORAGE_KEY);
   if (checked.ok) {
     return {
       state: checked.value.state, saveBlocked: false,
-      notice: checked.value.droppedSlots > 0
-        ? `参照先のグループがないスロットを ${checked.value.droppedSlots} 件削除して復元しました。` : null,
+      notice: createRestoreNotice(checked.value),
     };
   }
 
-  const backupKey = `${STORAGE_KEY}:broken-${(dependencies.now ?? Date.now)()}`;
+  const backupKey = `${sourceKey}:broken-${(dependencies.now ?? Date.now)()}`;
   try {
     storage.setItem(backupKey, original);
   } catch (error) {
@@ -180,7 +182,8 @@ export function importDeckJson(
   }
   if (typeof value !== 'object' || value === null || !('format' in value)
     || value.format !== 'shodou-calc-deck' || !('version' in value)
-    || value.version !== DECK_FILE_VERSION || !('deck' in value)) {
+    || (value.version !== DECK_FILE_VERSION && value.version !== LEGACY_DECK_FILE_VERSION)
+    || !('deck' in value)) {
     return { ok: false, error: 'このデッキファイルの形式またはバージョンには対応していません。' };
   }
   const checked = validateDeck(value.deck);
