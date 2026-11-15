@@ -1,0 +1,5 @@
+.CardSearch { min-width: 0; }
+.CardSearch-results { list-style: none; margin: var(--space-2) 0 0; padding: 0; max-height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.CardSearch-results [role="option"] { padding: var(--space-2); cursor: pointer; border-bottom: 1px solid var(--border); }
+.CardSearch-results [role="option"]:last-child { border-bottom: 0; }
+.CardSearch-results [aria-selected="true"], .CardSearch-results [role="option"]:hover { background: var(--accent-weak); }

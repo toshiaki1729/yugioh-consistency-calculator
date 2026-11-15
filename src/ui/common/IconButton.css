@@ -1,0 +1,2 @@
+.IconButton { min-width: 36px; padding-inline: var(--space-2); flex-shrink: 0; }
+@media (width < 900px) { .IconButton { min-width: 40px; } }

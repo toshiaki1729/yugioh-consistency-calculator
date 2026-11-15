@@ -1,0 +1,2 @@
+.TextField { display: grid; gap: var(--space-1); min-width: 0; }
+.TextField input { width: 100%; min-width: 0; }

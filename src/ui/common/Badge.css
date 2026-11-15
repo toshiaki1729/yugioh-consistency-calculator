@@ -1,0 +1,4 @@
+.Badge { display: inline-block; flex-shrink: 0; padding: 0 var(--space-1); border: 1px solid currentColor; border-radius: var(--radius-sm); font-size: var(--font-size-small); }
+.Badge-monster { color: var(--kind-monster); }
+.Badge-spell { color: var(--kind-spell); }
+.Badge-trap { color: var(--kind-trap); }

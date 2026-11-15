@@ -1,0 +1,2 @@
+.Select { display: grid; gap: var(--space-1); min-width: 0; }
+.Select select { width: 100%; min-width: 0; }

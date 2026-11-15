@@ -1,0 +1,9 @@
+.DeckHeader { display: grid; gap: var(--space-2); margin-top: var(--space-3); min-width: 0; }
+.DeckHeader-toolbar, .DeckHeader-actions { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-2); }
+.DeckHeader-toolbar > .Select { flex: 1 1 200px; max-width: 100%; }
+.DeckHeader-form { display: grid; gap: var(--space-4); }
+.DeckHeader-actions { justify-content: flex-end; margin-top: var(--space-3); }
+.DeckHeader-message { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); overflow-wrap: anywhere; }
+.DeckHeader-message p { flex: 1 1 200px; }
+.DeckHeader-error { color: var(--danger); overflow-wrap: anywhere; }
+.DeckHeader-status { color: var(--text-muted); font-size: var(--font-size-small); }

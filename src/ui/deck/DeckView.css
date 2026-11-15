@@ -1,0 +1,16 @@
+.DeckView { display: grid; gap: var(--space-5); min-width: 0; }
+.DeckView-importSlot { min-height: var(--space-6); margin-top: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius); }
+.DeckView-add { display: grid; gap: var(--space-3); }
+.DeckView-add > .Button { justify-self: start; }
+.DeckView-dbError { display: grid; justify-items: start; gap: var(--space-2); color: var(--danger); }
+.DeckView-warning { color: var(--warn); }
+.DeckView-section h2 { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2); background: var(--surface-2); }
+.DeckView-list { list-style: none; padding: 0; margin: 0; }
+.DeckView-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+.DeckView-card { min-width: 0; }
+.DeckView-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.DeckView-count { display: flex; align-items: center; gap: var(--space-2); }
+.DeckView-count > span { min-width: var(--space-5); text-align: center; }
+.DeckView-controls .Select { display: flex; align-items: center; gap: var(--space-1); }
+.DeckView-controls .Select select { width: auto; }
+.DeckView-note, .DeckView-empty { color: var(--text-muted); font-size: var(--font-size-small); margin-top: var(--space-2); }

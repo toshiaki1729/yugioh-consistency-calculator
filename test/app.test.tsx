@@ -2,10 +2,16 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import App from '../src/App';
+import { createCardDb } from '../src/carddb/loader';
+import { convertCards } from '../src/carddb/convert';
+import sample from './fixtures/yaml-yugi-sample.json';
+
+const db = createCardDb(convertCards(sample, '2026-11-15T00:00:00.000Z').db);
+const storage = { getItem: () => null, setItem: () => {} };
 
 describe('アプリの骨格', () => {
   it('アプリ名と初期タブ、結果パネル、フッターを表示する', () => {
-    render(<App />);
+    render(<App db={db} storage={storage} />);
 
     expect(screen.getByRole('heading', { name: '初動率計算機', level: 1 })).toBeVisible();
     expect(screen.getAllByRole('tab')).toHaveLength(3);
@@ -17,7 +23,7 @@ describe('アプリの骨格', () => {
 
   it('クリックでタブと表示パネルを切り替える', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<App db={db} storage={storage} />);
 
     for (const name of ['カードグループ', '初動パターン', 'デッキ']) {
       await user.click(screen.getByRole('tab', { name }));
@@ -29,8 +35,8 @@ describe('アプリの骨格', () => {
 
   it('左右矢印で循環し、Home/Endで両端へ移動できる', async () => {
     const user = userEvent.setup();
-    render(<App />);
-    await user.tab();
+    render(<App db={db} storage={storage} />);
+    await user.click(screen.getByRole('tab', { name: 'デッキ' }));
     expect(screen.getByRole('tab', { name: 'デッキ' })).toHaveFocus();
 
     const moves = [

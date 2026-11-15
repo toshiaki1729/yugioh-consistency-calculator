@@ -1,0 +1,3 @@
+.Button-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.Button-danger { color: var(--danger); }
+.Button:disabled { cursor: default; color: var(--text-muted); background: var(--surface-2); }
