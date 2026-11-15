@@ -19,10 +19,17 @@ export interface EngineSlot {
   members: number[];
 }
 
-/** 同時に満たすスロットの組。 */
+/** デッキに残す対象クラスと必要枚数。 */
+export interface EngineCondition {
+  members: number[];
+  minRemaining: number;
+}
+
+/** 同時に満たすスロットとデッキの残数条件。 */
 export interface EnginePattern {
   id: string;
   slots: EngineSlot[];
+  conditions: EngineCondition[];
 }
 
 /** Worker に渡すカードクラス集約済みの計算入力。 */
@@ -31,6 +38,8 @@ export interface EngineInput {
   classes: { key: string; count: number }[];
   otherCount: number;
   patterns: EnginePattern[];
+  /** 計算対象から除いた、ドロー効果なしでは常に不成立のパターン。 */
+  impossiblePatternIds?: string[];
   handSizes: number[];
   limits: EngineLimits;
 }

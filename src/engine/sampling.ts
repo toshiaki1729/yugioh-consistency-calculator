@@ -27,7 +27,9 @@ export function runSampling(
   deck.fill(otherIndex, offset);
   const hand = new Uint8Array(otherIndex + 1);
   const swaps = new Uint8Array(handSize);
-  const matches = createHandMatcher(input.patterns, handSize);
+  const matches = createHandMatcher(
+    input.patterns, handSize, input.classes.map(group => group.count),
+  );
   let successes = 0;
   for (let sample = 1; sample <= samples; sample++) {
     hand.fill(0);

@@ -274,7 +274,7 @@ describe('列挙と重み', () => {
   });
 
   it('最大流が再割当てを行い、ネットワークを次の手札でも再利用できる', () => {
-    const match = createHandMatcher([{ id: 'P', slots: [
+    const match = createHandMatcher([{ id: 'P', conditions: [], slots: [
       { count: 1, distinct: false, members: [0] },
       { count: 1, distinct: false, members: [1, 0] },
     ] }], 2);
@@ -286,7 +286,7 @@ describe('列挙と重み', () => {
   });
 
   it('所属枚数の単純な合計は足りても割り当てられない手札を拒否する', () => {
-    const match = createHandMatcher([{ id: 'P', slots: [
+    const match = createHandMatcher([{ id: 'P', conditions: [], slots: [
       { count: 1, distinct: false, members: [0] },
       { count: 1, distinct: false, members: [0] },
       { count: 1, distinct: false, members: [1, 2] },

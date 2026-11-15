@@ -1,6 +1,6 @@
-import { isInGroup } from '../domain/filter';
 import { MAX_HAND_SIZE, MIN_HAND_SIZE } from '../domain/limits';
-import type { CardData, CardId, Deck, Result, Slot } from '../domain/types';
+import type { CardData, CardId, Deck, Pattern, Result } from '../domain/types';
+import { compileClassPatterns } from './compileClassPatterns';
 import { DEFAULT_LIMITS } from './types';
 import type { EngineInput, EngineLimits } from './types';
 import { MAX_DECK_SIZE } from './constants';
@@ -30,7 +30,11 @@ export function compile(
       return { ok: false, error: `手札枚数 ${handSize} はメインデッキの枚数（${deckSize} 枚）を超えています` };
     }
   }
-  const active = deck.patterns.filter(pattern => pattern.enabled && pattern.slots.length > 0);
+  const active = deck.patterns.filter(pattern =>
+    pattern.enabled && (pattern.slots.length > 0 || pattern.conditions.length > 0));
+  if (hasUnsupportedCalculation(deck, counts, active)) {
+    return { ok: false, error: 'ドロー効果と一部の条件はまだ計算できません' };
+  }
   if (active.length === 0) return { ok: false, error: '有効な初動パターンがありません' };
   const settings = { ...DEFAULT_LIMITS, ...limits };
   if (!Number.isSafeInteger(settings.exactMaxStates) || settings.exactMaxStates < 0
@@ -39,61 +43,18 @@ export function compile(
     return { ok: false, error: '計算上限は 0 以上、サンプル数は 1 以上の整数、シードは整数で指定してください' };
   }
 
-  const slots = active.flatMap(pattern => pattern.slots);
-  const { classes, otherCount, members } = collectClasses(deck, counts, slots, resolveCard);
-  let slotIndex = 0;
-  const patterns = active.map(pattern => ({
-    id: pattern.id,
-    slots: pattern.slots.map(slot => ({
-      count: slot.count,
-      distinct: slot.distinctNames,
-      members: members[slotIndex++],
-    })),
-  }));
+  const compiled = compileClassPatterns(deck, counts, active, resolveCard);
   return {
     ok: true,
-    value: { deckSize, classes, otherCount, patterns, handSizes: [...handSizes], limits: settings },
+    value: { deckSize, ...compiled, handSizes: [...handSizes], limits: settings },
   };
 }
 
-function collectClasses(
-  deck: Deck, counts: Map<CardId, number>, slots: Slot[],
-  resolveCard: (id: CardId) => CardData | undefined,
+// T27 でシミュレーションへ接続するまで、対応前の定義を無視して計算しない。
+function hasUnsupportedCalculation(
+  deck: Deck, counts: Map<CardId, number>, active: Pattern[],
 ) {
-  const groups = new Map(deck.groups.map(group => [group.id, group]));
-  const members = slots.map(() => [] as number[]);
-  const classes: EngineInput['classes'] = [];
-  const classIndices = new Map<string, number>();
-  let otherCount = 0;
-  for (const [cardId, count] of counts) {
-    const card = resolveCard(cardId);
-    const membership: number[] = [];
-    let hasDistinctSlot = false;
-    for (let i = 0; i < slots.length; i++) {
-      const slot = slots[i];
-      const group = slot.source.type === 'group' ? groups.get(slot.source.groupId) : undefined;
-      const isMatch = slot.source.type === 'card'
-        ? slot.source.cardId === cardId
-        : group !== undefined && isInGroup(group, cardId, card);
-      if (isMatch) {
-        membership.push(i);
-        hasDistinctSlot ||= slot.distinctNames;
-      }
-    }
-    if (membership.length === 0) {
-      otherCount += count;
-      continue;
-    }
-    const key = hasDistinctSlot ? `card:${cardId}` : `slots:${membership.join(',')}`;
-    const existing = classIndices.get(key);
-    if (existing !== undefined) {
-      classes[existing].count += count;
-    } else {
-      const index = classes.length;
-      classIndices.set(key, index);
-      classes.push({ key, count });
-      for (const slotIndex of membership) members[slotIndex].push(index);
-    }
-  }
-  return { classes, otherCount, members };
+  return deck.effects.some(effect => (counts.get(effect.cardId) ?? 0) > 0)
+    || active.some(pattern =>
+      pattern.conditions.some(condition => condition.kind !== 'deckAtLeast'));
 }

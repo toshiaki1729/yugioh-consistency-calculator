@@ -5,6 +5,9 @@ export function project(input: EngineInput, pattern: EnginePattern): EngineInput
   const classes: EngineInput['classes'] = [];
   const indices = new Map<string, number>();
   const slots = pattern.slots.map(slot => ({ ...slot, members: [] as number[] }));
+  const conditions = pattern.conditions.map(condition => ({
+    ...condition, members: [] as number[],
+  }));
   let otherCount = input.otherCount;
   for (let i = 0; i < input.classes.length; i++) {
     const membership: number[] = [];
@@ -16,13 +19,19 @@ export function project(input: EngineInput, pattern: EnginePattern): EngineInput
         hasDistinctSlot ||= slot.distinct;
       }
     }
+    const conditionMembership: number[] = [];
+    for (let j = 0; j < pattern.conditions.length; j++) {
+      if (pattern.conditions[j].members.includes(i)) conditionMembership.push(j);
+    }
     const source = input.classes[i];
-    if (membership.length === 0) {
+    if (membership.length === 0 && conditionMembership.length === 0) {
       otherCount += source.count;
       continue;
     }
     // このパターンに種類違い指定がなければ、他パターン用の単独クラスもまとめられる。
-    const key = hasDistinctSlot ? `class:${i}:${source.key}` : `slots:${membership.join(',')}`;
+    let key = `slots:${membership.join(',')}`;
+    if (conditionMembership.length > 0) key += `|conds:${conditionMembership.join(',')}`;
+    if (hasDistinctSlot) key = `class:${i}:${source.key}`;
     const existing = indices.get(key);
     if (existing !== undefined) {
       classes[existing].count += source.count;
@@ -31,12 +40,14 @@ export function project(input: EngineInput, pattern: EnginePattern): EngineInput
       indices.set(key, index);
       classes.push({ key, count: source.count });
       for (const j of membership) slots[j].members.push(index);
+      for (const j of conditionMembership) conditions[j].members.push(index);
     }
   }
   return {
     ...input,
     classes,
     otherCount,
-    patterns: [{ id: pattern.id, slots }],
+    patterns: [{ id: pattern.id, slots, conditions }],
+    ...(input.impossiblePatternIds ? { impossiblePatternIds: [] } : {}),
   };
 }

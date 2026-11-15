@@ -2,9 +2,17 @@ import type { EnginePattern, EngineSlot } from './types';
 
 /** 手札が有効なパターンのいずれかを満たすか判定する。 */
 export function createHandMatcher(
-  patterns: EnginePattern[], handSize: number,
+  patterns: (EnginePattern & { conditions: [] })[], handSize: number,
+): (hand: Uint8Array) => boolean;
+/** 残数条件を含むパターンをクラスの総枚数と照合する。 */
+export function createHandMatcher(
+  patterns: EnginePattern[], handSize: number, classCounts: ArrayLike<number>,
+): (hand: Uint8Array) => boolean;
+/** 条件のない呼び出しではクラスの総枚数を省略できる。 */
+export function createHandMatcher(
+  patterns: EnginePattern[], handSize: number, classCounts: ArrayLike<number> = [],
 ): (hand: Uint8Array) => boolean {
-  const matchers = patterns.map(pattern => createPatternMatcher(pattern, handSize));
+  const matchers = patterns.map(pattern => createPatternMatcher(pattern, handSize, classCounts));
   return hand => {
     for (let i = 0; i < matchers.length; i++) {
       if (matchers[i](hand)) return true;
@@ -122,9 +130,26 @@ function createFlowNetwork(pattern: EnginePattern, demand: number) {
   };
 }
 
-function createPatternMatcher(pattern: EnginePattern, handSize: number) {
+function createPatternMatcher(
+  pattern: EnginePattern, handSize: number, classCounts: ArrayLike<number>,
+) {
   const demand = pattern.slots.reduce((sum, slot) => sum + slot.count, 0);
-  if (demand > handSize || pattern.slots.length === 0) return () => false;
-  if (pattern.slots.length === 1) return createSingleSlotMatcher(pattern.slots[0]);
-  return createFlowNetwork(pattern, demand);
+  if (demand > handSize) return () => false;
+  let matchesSlots: (hand: Uint8Array) => boolean = () => true;
+  if (pattern.slots.length === 1) matchesSlots = createSingleSlotMatcher(pattern.slots[0]);
+  if (pattern.slots.length > 1) matchesSlots = createFlowNetwork(pattern, demand);
+  if (pattern.conditions.length === 0) return matchesSlots;
+  const conditions = pattern.conditions.map(condition => ({
+    members: Int32Array.from(condition.members),
+    maxDrawn: condition.members.reduce((sum, index) => sum + classCounts[index], 0)
+      - condition.minRemaining,
+  }));
+  return (hand: Uint8Array) => {
+    for (const condition of conditions) {
+      let drawn = 0;
+      for (let i = 0; i < condition.members.length; i++) drawn += hand[condition.members[i]];
+      if (drawn > condition.maxDrawn) return false;
+    }
+    return matchesSlots(hand);
+  };
 }

@@ -6,7 +6,7 @@ import type { EngineInput } from '../src/engine/types';
 import { FakeEngineWorker } from './fixtures/engineWorker';
 
 const input: EngineInput = { deckSize: 40, classes: [{ key: 'a', count: 3 }], otherCount: 37,
-  patterns: [{ id: 'p1', slots: [{ count: 1, distinct: false, members: [0] }] }], handSizes: [5, 6], limits: DEFAULT_LIMITS };
+  patterns: [{ id: 'p1', slots: [{ count: 1, distinct: false, members: [0] }], conditions: [] }], handSizes: [5, 6], limits: DEFAULT_LIMITS };
 
 describe('Worker クライアント', () => {
   it('同期の偽 Worker でも結果と進捗を受け取り、Worker を再利用する', async () => {

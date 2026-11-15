@@ -8,7 +8,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.resetModules()
 
 const message: RunMessage = { type: 'run', requestId: 42, input: {
   deckSize: 40, classes: [{ key: 'a', count: 3 }], otherCount: 37,
-  patterns: [{ id: 'p1', slots: [{ count: 1, distinct: false, members: [0] }] }], handSizes: [5, 6], limits: DEFAULT_LIMITS,
+  patterns: [{ id: 'p1', slots: [{ count: 1, distinct: false, members: [0] }], conditions: [] }], handSizes: [5, 6], limits: DEFAULT_LIMITS,
 } };
 
 describe('Worker エントリ', () => {

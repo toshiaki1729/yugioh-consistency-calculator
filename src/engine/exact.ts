@@ -49,7 +49,7 @@ export function runExact(
   const suffix = new Uint8Array(size + 1);
   suffix[size] = input.otherCount;
   for (let i = size - 1; i >= 0; i--) suffix[i] = suffix[i + 1] + capacities[i];
-  const matches = createHandMatcher(input.patterns, handSize);
+  const matches = createHandMatcher(input.patterns, handSize, capacities);
   let done = 0;
   let weightSum = 0;
   let successWeight = 0;
