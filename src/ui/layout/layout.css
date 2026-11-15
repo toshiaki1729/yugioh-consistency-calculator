@@ -66,7 +66,14 @@
   min-height: 64px;
   padding: var(--space-4) 0;
   border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--font-size-small);
+  overflow-wrap: anywhere;
 }
+
+.error-boundary { grid-column: 1 / -1; display: grid; gap: var(--space-3); min-width: 0; padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow-wrap: anywhere; }
+.error-boundary-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.error-boundary-actions .Button { height: auto; min-height: 36px; }
 
 .result-detail { display: grid; gap: var(--space-3); min-width: 0; overflow-wrap: anywhere; }
 .result-bar { display: none; }
@@ -87,6 +94,7 @@
 .result-progress > .Button { justify-self: start; }
 
 @media (width < 900px) {
+  .error-boundary-actions .Button { min-height: 40px; }
   .app-shell {
     padding-bottom: 64px;
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCardDb, useResolveCard } from '../../carddb/useCardDb';
 import type { CardData, Deck, Section } from '../../domain/types';
 import { useDispatch } from '../../state/store';
@@ -21,6 +21,8 @@ export function DeckView({ deck, onImport }: { deck: Deck; onImport: (payload: I
   const dispatch = useDispatch();
   const dbState = useCardDb();
   const resolveCard = useResolveCard();
+  const importSection = useRef<HTMLElement>(null);
+  const addSection = useRef<HTMLElement>(null);
   const [section, setSection] = useState<Section>('main');
   const [editing, setEditing] = useState<CardData | 'new' | null>(null);
   const [pendingCard, setPendingCard] = useState<{ previousIds: string[]; section: Section } | null>(null);
@@ -39,7 +41,14 @@ export function DeckView({ deck, onImport }: { deck: Deck; onImport: (payload: I
   }, [deck.customCards, pendingCard, dispatch]);
 
   return <div className="DeckView">
-    <section className="DeckView-import" aria-labelledby="deck-import-heading">
+    {deck.entries.length === 0 && <EmptyState>
+      <p>デッキを取り込むか、カードを追加してください。</p>
+      <div className="DeckView-controls">
+        <Button onClick={() => importSection.current?.querySelector('textarea')?.focus()}>取り込み欄へ</Button>
+        <Button disabled={dbState.status !== 'ready'} onClick={() => addSection.current?.querySelector<HTMLInputElement>('[role="combobox"]')?.focus()}>カード検索へ</Button>
+      </div>
+    </EmptyState>}
+    <section ref={importSection} className="DeckView-import" aria-labelledby="deck-import-heading">
       <h2 id="deck-import-heading">デッキを取り込む</h2>
       <ImportView onImport={onImport} showDbStatus={false} />
     </section>
@@ -47,7 +56,7 @@ export function DeckView({ deck, onImport }: { deck: Deck; onImport: (payload: I
     {dbState.status === 'error' && <div className="DeckView-dbError">
       <p role="alert">{dbState.error}</p><Button onClick={dbState.retry}>カードDBを再試行</Button>
     </div>}
-    <section className="DeckView-add" aria-labelledby="deck-add-heading">
+    <section ref={addSection} className="DeckView-add" aria-labelledby="deck-add-heading">
       <h2 id="deck-add-heading">カードを追加</h2>
       <Select label="追加先" value={section} onChange={event => setSection(event.target.value as Section)}>
         {sections.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
@@ -58,7 +67,6 @@ export function DeckView({ deck, onImport }: { deck: Deck; onImport: (payload: I
     {(mainCount < 40 || mainCount > 60) && <p className="DeckView-warning">
       {mainCount > 60 ? '計算できません（60 枚まで）' : 'メインデッキは 40〜60 枚を推奨します。'} 現在 {mainCount} 枚
     </p>}
-    {deck.entries.length === 0 && <EmptyState>カードを検索して追加するか、カスタムカードを作成してください。</EmptyState>}
     {sections.map(({ value, label }) => {
       const rows = entries.filter(({ entry }) => entry.section === value);
       const count = rows.reduce((total, { entry }) => total + entry.count, 0);

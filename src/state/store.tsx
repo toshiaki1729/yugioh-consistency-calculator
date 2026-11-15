@@ -31,7 +31,19 @@ export function AppStateProvider({ children, storage, newId, now }: AppStateProv
   const saveError = useSyncExternalStore(session.saver.subscribe, session.saver.getError);
 
   useEffect(() => { session.saver.schedule(state.app); }, [session, state.app]);
-  useEffect(() => () => { session.saver.flush(); }, [session]);
+  useEffect(() => {
+    const flush = () => session.saver.flush();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      flush();
+    };
+  }, [session]);
 
   return (
     <AppContext.Provider value={{ app: state.app, activeDeck: state.app.decks.find(deck => deck.id === state.app.activeDeckId) ?? null }}>

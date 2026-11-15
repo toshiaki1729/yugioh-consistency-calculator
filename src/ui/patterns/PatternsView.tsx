@@ -87,7 +87,7 @@ export function PatternsView({ deck }: { deck: Deck }) {
   }
 
   return <div className="PatternsView">
-    {deck.patterns.length === 0 && <EmptyState>初動とみなすカードの組み合わせをパターンとして作成してください。</EmptyState>}
+    {deck.patterns.length === 0 && <EmptyState>初動とみなすカードの組み合わせをパターンとして作成してください。先に「カードグループ」タブでグループを作るか、スロットの対象に「特定のカード」を指定できます。</EmptyState>}
     <Button disabled={deck.patterns.length >= 200} onClick={() => {
       let number = 1;
       while (deck.patterns.some(pattern => pattern.name === `パターン ${number}`)) number++;
