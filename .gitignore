@@ -1,5 +1,6 @@
-.duet/runs/
-.duet/state.json
+# 開発用のツールの作業ファイル（リポジトリには含めない）
+.duet/
+.claude/
 node_modules/
 dist/
 data-src/
