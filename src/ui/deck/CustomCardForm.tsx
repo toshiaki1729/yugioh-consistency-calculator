@@ -10,10 +10,10 @@ import { Select } from '../common/Select';
 import { TextField } from '../common/TextField';
 import './CustomCardForm.css';
 
-export function CustomCardForm({ card, onSave, onClose }: {
-  card?: CardData; onSave: (card: CardData) => void; onClose: () => void;
+export function CustomCardForm({ card, initialName = '', importCount, onSave, onClose }: {
+  card?: CardData; initialName?: string; importCount?: number; onSave: (card: CardData) => void; onClose: () => void;
 }) {
-  const [draft, setDraft] = useState<CardData>(card ?? { id: 'c:draft', name: '', kind: 'monster', monsterTypes: [], text: '' });
+  const [draft, setDraft] = useState<CardData>(card ?? { id: 'c:draft', name: initialName, kind: 'monster', monsterTypes: [], text: '' });
   const [error, setError] = useState<string | null>(null);
   const monster = draft.kind === 'monster';
   const link = draft.monsterTypes.includes('link');
@@ -40,6 +40,7 @@ export function CustomCardForm({ card, onSave, onClose }: {
       onSave(cleaned);
     }}>
       <TextField label="カード名" data-autofocus value={draft.name} maxLength={100} required onChange={event => setDraft({ ...draft, name: event.target.value })} />
+      {importCount !== undefined && <p>取り込み枚数: {importCount} 枚</p>}
       <Select label="カードの種類" value={draft.kind} onChange={event => setDraft({ ...draft, kind: event.target.value as CardKind, property: undefined })}>
         {Object.entries(cardKindLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </Select>

@@ -136,6 +136,28 @@ describe('状態の編集', () => {
     expect(h.deck.pageData).toEqual(original.pageData);
   });
 
+  it.each(['new', 'replace'] as const)('取り込み %s でカスタムカードと区分・枚数を原子的に追加する', mode => {
+    const h = harness();
+    h.send({ type: 'import/apply', mode, deckName: 'カスタム取り込み', entries: [entry()], pageData: {},
+      customCards: [{ card: { name: '未収録', kind: 'trap', monsterTypes: [], text: '' }, count: 3, section: 'side' }] });
+    expect(h.state.lastError).toBeNull();
+    const added = h.deck.customCards.at(-1)!;
+    expect(added).toMatchObject({ name: '未収録', custom: true });
+    expect(added.id).toMatch(/^c:new-/);
+    expect(h.deck.entries).toEqual([entry(), { cardId: added.id, name: '未収録', count: 3, section: 'side' }]);
+    expect(h.deck.customCards).toHaveLength(mode === 'new' ? 1 : 2);
+  });
+
+  it('取り込みのカスタムカード上限超過で名前・エントリも含め全体を拒否する', () => {
+    const initial = app();
+    initial.decks[0].customCards = Array.from({ length: 200 }, (_, i) => card(`c:${i}`));
+    const h = harness(initial);
+    h.send({ type: 'import/apply', mode: 'replace', deckName: '変更しない', entries: [], pageData: {},
+      customCards: [{ card: { name: '未収録', kind: 'trap', monsterTypes: [], text: '' }, count: 2, section: 'extra' }] });
+    expect(h.state.app).toBe(initial);
+    expect(h.state.lastError).toContain('上限');
+  });
+
   it('カスタムカードを追加・編集し、カード名と pageData を更新する', () => {
     const h = harness();
     h.send({ type: 'customCard/add', card: { name: '手入力', kind: 'spell', monsterTypes: [], text: '' } });

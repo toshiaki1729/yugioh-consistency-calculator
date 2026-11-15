@@ -26,7 +26,8 @@ export type Action =
   | { type: 'entry/setCount'; cardId: CardId; section: Section; count: number }
   | { type: 'entry/delete'; cardId: CardId; section: Section }
   | { type: 'entry/setSection'; cardId: CardId; section: Section; newSection: Section }
-  | { type: 'import/apply'; mode: 'new' | 'replace'; deckName: string; entries: DeckEntry[]; pageData: Record<CardId, CardData> }
+  | { type: 'import/apply'; mode: 'new' | 'replace'; deckName: string; entries: DeckEntry[]; pageData: Record<CardId, CardData>;
+      customCards?: { card: Omit<CardData, 'id' | 'custom'>; count: number; section: Section }[] }
   | { type: 'customCard/add'; card: Omit<CardData, 'id' | 'custom'> }
   | { type: 'customCard/edit'; cardId: CardId; changes: Partial<Omit<CardData, 'id' | 'custom'>> }
   | { type: 'customCard/delete'; cardId: CardId }
@@ -222,6 +223,13 @@ export function createReducer(
 
     if (action.type === 'entry/add' || action.type === 'entry/setSection' || action.type === 'import/apply') {
       const deck = app.decks.find(item => item.id === app.activeDeckId)!;
+      if (action.type === 'import/apply') {
+        for (const item of action.customCards ?? []) {
+          const card = { ...item.card, id: `c:${newId()}`, custom: true };
+          deck.customCards.push(card);
+          deck.entries.push({ cardId: card.id, name: card.name, count: item.count, section: item.section });
+        }
+      }
       const merged = new Map<string, DeckEntry>();
       for (const entry of deck.entries) {
         if (!Number.isInteger(entry.count) || entry.count < 1 || entry.count > 60) {

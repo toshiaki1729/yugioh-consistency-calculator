@@ -10,12 +10,14 @@ import { CardSearch } from './CardSearch';
 import { CardSummary } from './CardSummary';
 import { CustomCardForm } from './CustomCardForm';
 import './DeckView.css';
+import { ImportView } from '../import/ImportView';
+import type { ImportPayload } from '../../importer/payload';
 
 const sections: { value: Section; label: string }[] = [
   { value: 'main', label: 'メイン' }, { value: 'extra', label: 'エクストラ' }, { value: 'side', label: 'サイド' },
 ];
 
-export function DeckView({ deck }: { deck: Deck }) {
+export function DeckView({ deck, onImport }: { deck: Deck; onImport: (payload: ImportPayload) => void }) {
   const dispatch = useDispatch();
   const dbState = useCardDb();
   const resolveCard = useResolveCard();
@@ -39,7 +41,7 @@ export function DeckView({ deck }: { deck: Deck }) {
   return <div className="DeckView">
     <section className="DeckView-import" aria-labelledby="deck-import-heading">
       <h2 id="deck-import-heading">デッキを取り込む</h2>
-      <div className="DeckView-importSlot" />
+      <ImportView onImport={onImport} showDbStatus={false} />
     </section>
     {dbState.status === 'loading' && <p role="status">カードDBを読み込み中…</p>}
     {dbState.status === 'error' && <div className="DeckView-dbError">

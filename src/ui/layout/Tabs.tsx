@@ -3,10 +3,14 @@ import type { ReactNode } from 'react';
 
 interface TabsProps {
   items: { id: string; label: string; content?: ReactNode }[];
+  activeId?: string;
+  onSelect?: (id: string) => void;
 }
 
-export function Tabs({ items }: TabsProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
+export function Tabs({ items, activeId, onSelect }: TabsProps) {
+  const [localIndex, setLocalIndex] = useState(0);
+  const activeIndex = activeId === undefined ? localIndex : items.findIndex(item => item.id === activeId);
+  const setActiveIndex = (index: number) => { setLocalIndex(index); onSelect?.(items[index].id); };
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const id = useId();
 
