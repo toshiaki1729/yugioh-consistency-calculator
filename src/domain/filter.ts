@@ -1,9 +1,11 @@
 import type { CardData, CardGroup, CardId, FilterNode } from './types';
 import { escapeRegExp, normalizeForMatch, normalizeKana } from './normalize';
+import { getRuleNames, removeRuleNameSentences } from './ruleNames';
 
 const normalizedCards = new WeakMap<CardData, {
   name: string; kana: string; text: string; pendulumText: string;
   kanaName: string; kanaReading: string; kanaText: string;
+  kanaRuleNames: string[]; mentionsText: string;
 }>();
 const archetypeSuffix = escapeRegExp(normalizeKana('カードとしても扱う'));
 
@@ -15,6 +17,9 @@ function getNormalizedCard(card: CardData) {
       text: normalizeForMatch(card.text), pendulumText: normalizeForMatch(card.pendulumText ?? ''),
       kanaName: normalizeKana(card.name), kanaReading: normalizeKana(card.kana ?? ''),
       kanaText: normalizeKana(card.text),
+      kanaRuleNames: getRuleNames(card).map(normalizeKana),
+      mentionsText: [card.text, card.pendulumText ?? '']
+        .map(text => normalizeForMatch(removeRuleNameSentences(text))).join('\n'),
     };
     normalizedCards.set(card, normalized);
   }
@@ -51,7 +56,8 @@ export function evaluateFilter(node: FilterNode, card: CardData): boolean {
     const keyword = normalizeKana(predicate.text);
     if (!keyword) return false;
     const hasName = normalized.kanaName.includes(keyword)
-      || normalized.kanaReading.includes(keyword);
+      || normalized.kanaReading.includes(keyword)
+      || normalized.kanaRuleNames.some(name => name.includes(keyword));
     if (hasName) return true;
     return predicate.kind === 'archetype'
       && new RegExp(`「[^」]*${escapeRegExp(keyword)}[^」]*」${archetypeSuffix}`)
@@ -63,8 +69,7 @@ export function evaluateFilter(node: FilterNode, card: CardData): boolean {
       || (predicate.includePendulum && normalized.pendulumText.includes(keyword));
     case 'mentionsName': {
       // 効果欄の境界をまたいだ引用を作らず、自己参照をすべて除いて調べる。
-      const text = `${normalized.text}\n${normalized.pendulumText}`
-        .split(`「${normalized.name}」`).join('');
+      const text = normalized.mentionsText.split(`「${normalized.name}」`).join('');
       return new RegExp(`「${escapeRegExp(keyword)}」(?!モンスター|カード|魔法|罠)`).test(text);
     }
   }
