@@ -5,6 +5,7 @@ import { downloadDeck } from '../../state/persist';
 import type { SaveStatus } from '../../state/persist';
 import { Button } from '../common/Button';
 
+/** 表示中の例外を捕捉し、再読み込みとデータ退避を案内する。 */
 export class ErrorBoundary extends Component<{
   children: ReactNode;
   saveStatus: SaveStatus;
@@ -21,7 +22,8 @@ export class ErrorBoundary extends Component<{
   }
 
   render() {
-    if (!this.state.failed) return this.props.children;
+    const { failed: isFailed } = this.state;
+    if (!isFailed) return this.props.children;
     const { saveStatus, activeDeck } = this.props;
     return <section className="error-boundary" role="alert">
       <h2>問題が発生しました</h2>

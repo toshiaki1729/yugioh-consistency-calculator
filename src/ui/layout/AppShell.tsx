@@ -5,12 +5,14 @@ import { useAppState, useSaveStatus } from '../../state/store';
 import { useCardDb } from '../../carddb/useCardDb';
 import './layout.css';
 
+/** 編集エリア・計算結果・出典を共通レイアウトに配置する。 */
 export function AppShell({ children, header }: { children: ReactNode; header?: ReactNode }) {
   const { activeDeck } = useAppState();
   const saveStatus = useSaveStatus();
   const cardDb = useCardDb();
-  const generatedAt = cardDb.status === 'ready' ? new Date(cardDb.db.generatedAt) : null;
-  const generatedLabel = generatedAt && `${generatedAt.getFullYear()}-${String(generatedAt.getMonth() + 1).padStart(2, '0')}-${String(generatedAt.getDate()).padStart(2, '0')} ${String(generatedAt.getHours()).padStart(2, '0')}:${String(generatedAt.getMinutes()).padStart(2, '0')}`;
+  const generatedAt = cardDb.status === 'ready' ? cardDb.db.generatedAt : undefined;
+  const generatedLabel = cardDb.status === 'ready'
+    ? formatGeneratedDate(cardDb.db.generatedAt) : null;
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -25,8 +27,18 @@ export function AppShell({ children, header }: { children: ReactNode; header?: R
       </main>
       <footer className="app-footer" aria-label="出典">
         <p>カードデータ: <a href="https://github.com/DawnbrandBots/yaml-yugi">yaml-yugi</a>（AGPL-3.0）。カードテキスト © Studio Dice/SHUEISHA, TV TOKYO, KONAMI。本アプリは非公式のファンメイドツールです</p>
-        {generatedLabel && <p>カードDB 生成: <time dateTime={cardDb.status === 'ready' ? cardDb.db.generatedAt : undefined}>{generatedLabel}</time></p>}
+        {generatedLabel && <p>カードDB 生成: <time dateTime={generatedAt}>{generatedLabel}</time></p>}
       </footer>
     </div>
   );
+}
+
+function formatGeneratedDate(value: string): string {
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
 }

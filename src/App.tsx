@@ -17,6 +17,7 @@ import type { ImportPayload } from './importer/payload';
 import { ImportDialog } from './ui/import/ImportDialog';
 import { ImportView } from './ui/import/ImportView';
 import { Dialog } from './ui/common/Dialog';
+import type { Deck } from './domain/types';
 
 function AppContent() {
   const { activeDeck } = useAppState();
@@ -40,30 +41,49 @@ function AppContent() {
     window.addEventListener('hashchange', readHash);
     return () => window.removeEventListener('hashchange', readHash);
   }, []);
+  function handleImported() {
+    setIncoming(null);
+    setActiveTab('deck');
+  }
   return (
     <AppShell header={<DeckHeader />}>
-      <Tabs
-        activeId={activeTab} onSelect={setActiveTab}
-        items={[
-          { id: 'deck', label: 'デッキ', content: activeDeck
-            ? <DeckView key={activeDeck.id} deck={activeDeck} onImport={openImport} />
-            : <><EmptyState><p>デッキがありません。新規デッキを作成してください。</p><NewDeckButton /></EmptyState><ImportView onImport={openImport} /></> },
-          { id: 'groups', label: 'カードグループ', content: activeDeck
-            ? <GroupsView key={activeDeck.id} deck={activeDeck} />
-            : <EmptyState>デッキがありません</EmptyState> },
-          { id: 'patterns', label: '初動パターン', content: activeDeck
-            ? <PatternsView key={activeDeck.id} deck={activeDeck} />
-            : <EmptyState>デッキがありません</EmptyState> },
-        ]}
-      />
-      {incoming && <ImportDialog key={incoming.id} payload={incoming.payload} onClose={() => setIncoming(null)}
-        onImported={() => { setIncoming(null); setActiveTab('deck'); }} />}
-      {importError && <Dialog open title="取り込みエラー" onClose={() => setImportError(null)}><p role="alert">{importError}</p></Dialog>}
+      <AppEditor activeDeck={activeDeck} activeTab={activeTab}
+        onSelect={setActiveTab} onImport={openImport} />
+      {incoming && <ImportDialog key={incoming.id} payload={incoming.payload}
+        onClose={() => setIncoming(null)} onImported={handleImported} />}
+      {importError && <Dialog open title="取り込みエラー" onClose={() => setImportError(null)}>
+        <p role="alert">{importError}</p>
+      </Dialog>}
     </AppShell>
   );
 }
 
-export default function App({ db, loader, createWorker, ...stateProps }: Omit<AppStateProviderProps, 'children'> & {
+function AppEditor({ activeDeck, activeTab, onSelect, onImport }: {
+  activeDeck: Deck | null; activeTab: string;
+  onSelect: (id: string) => void; onImport: (payload: ImportPayload) => void;
+}) {
+  const emptyDeck = <>
+    <EmptyState>
+      <p>デッキがありません。新規デッキを作成してください。</p><NewDeckButton />
+    </EmptyState>
+    <ImportView onImport={onImport} />
+  </>;
+  const items = [
+    { id: 'deck', label: 'デッキ', content: activeDeck
+      ? <DeckView key={activeDeck.id} deck={activeDeck} onImport={onImport} /> : emptyDeck },
+    { id: 'groups', label: 'カードグループ', content: activeDeck
+      ? <GroupsView key={activeDeck.id} deck={activeDeck} />
+      : <EmptyState>デッキがありません</EmptyState> },
+    { id: 'patterns', label: '初動パターン', content: activeDeck
+      ? <PatternsView key={activeDeck.id} deck={activeDeck} />
+      : <EmptyState>デッキがありません</EmptyState> },
+  ];
+  return <Tabs activeId={activeTab} onSelect={onSelect} items={items} />;
+}
+
+/** 保存・カードDB・計算の接続を設定し、アプリ全体を表示する。 */
+export default function App({ db, loader, createWorker, ...stateProps }:
+  Omit<AppStateProviderProps, 'children'> & {
   db?: CardDb; loader?: ReturnType<typeof createCardDbLoader>; createWorker?: () => EngineWorker;
 } = {}) {
   return <AppStateProvider {...stateProps}>
