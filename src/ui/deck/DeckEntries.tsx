@@ -49,7 +49,7 @@ function DeckEntryRow({ entry, card, onEdit }: ResolvedEntry & {
   return <li className="DeckView-row" aria-label={card?.name ?? entry.name}>
     <div className="DeckView-card">
       <CardSummary card={card} name={entry.name} />
-      {!card && <p className="DeckView-note">グループへ手動追加するか、初動パターンで特定のカードとして指定できます。</p>}
+      {!card && <p className="DeckView-note">グループに手動で追加するか、初動パターンで特定のカードとして指定できます。</p>}
     </div>
     <div className="DeckView-controls">
       <div className="DeckView-count">

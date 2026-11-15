@@ -134,7 +134,7 @@ describe('カードグループ画面', () => {
     let dialog = within(screen.getByRole('dialog', { name: 'グループを削除' }));
     expect(dialog.getByText('二枚初動')).toBeVisible();
     expect(dialog.getByText('無効な初動')).toBeVisible();
-    expect(dialog.getByText('これらのパターンから該当スロットも削除されます')).toBeVisible();
+    expect(dialog.getByText('これらのパターンから該当するスロットも削除されます。')).toBeVisible();
     await user.click(dialog.getByRole('button', { name: 'キャンセル' }));
     expect(screen.getByLabelText('グループ名')).toHaveValue('グループ 1');
     await user.click(screen.getByRole('button', { name: '削除' }));
@@ -183,7 +183,7 @@ describe('カードグループ画面', () => {
 
   it('アクティブデッキがなければ空状態を表示する', async () => {
     await setup({ schemaVersion: 1, decks: [], activeDeckId: null, settings: { customHandSize: null } });
-    expect(within(screen.getByRole('tabpanel', { name: 'カードグループ' })).getByText('デッキがありません')).toBeVisible();
+    expect(within(screen.getByRole('tabpanel', { name: 'カードグループ' })).getByText('デッキがありません。新規デッキを作成してください。')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'グループを作成' })).not.toBeInTheDocument();
   });
 });

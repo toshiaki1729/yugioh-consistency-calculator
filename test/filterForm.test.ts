@@ -113,14 +113,14 @@ describe('条件フォームの変換', () => {
 
   it.each<[Predicate, string]>([
     [{ kind: 'level', range: { min: 5, max: 4 } }, '最小値は最大値以下'],
-    [{ kind: 'atk', range: { max: 100000 } }, '0〜99999の整数'],
-    [{ kind: 'def', range: { min: -1 } }, '0〜99999の整数'],
-    [{ kind: 'scale', range: { min: 1.5 } }, '0〜99999の整数'],
-    [{ kind: 'rank', range: { max: NaN } }, '0〜99999の整数'],
+    [{ kind: 'atk', range: { max: 100000 } }, '0〜99999 の整数'],
+    [{ kind: 'def', range: { min: -1 } }, '0〜99999 の整数'],
+    [{ kind: 'scale', range: { min: 1.5 } }, '0〜99999 の整数'],
+    [{ kind: 'rank', range: { max: NaN } }, '0〜99999 の整数'],
     [{ kind: 'link', range: {} }, 'どちらかを入力'],
     [{ kind: 'nameContains', text: '　 \t' }, 'キーワードを入力'],
-    [{ kind: 'textContains', text: 'あ'.repeat(101), includePendulum: true }, '100文字以下'],
-    [{ kind: 'attribute', values: [] }, '1つ以上選んで'],
+    [{ kind: 'textContains', text: 'あ'.repeat(101), includePendulum: true }, '100 文字以下'],
+    [{ kind: 'attribute', values: [] }, '1 つ以上選んで'],
   ])('不正な行を否定の有無にかかわらず除く (%#)', (pred, reason) => {
     expect(rowError(pred)).toContain(reason);
     const form: FilterForm = { op: 'or', rows: [

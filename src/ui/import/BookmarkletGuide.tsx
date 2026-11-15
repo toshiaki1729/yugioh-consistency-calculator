@@ -3,7 +3,7 @@ import type { MouseEvent } from 'react';
 import { buildBookmarkletUrl } from '../../importer/bookmarklet';
 import { Button } from '../common/Button';
 
-const SMARTPHONE_INSTRUCTIONS = 'スマートフォン: 下のボタンでコードをコピー → 任意のページをブックマークし、そのブックマークの URL をコピーしたコードに書き換える → デッキの詳細ページを開いた状態でアドレスバーにブックマーク名を入力して選ぶ';
+const SMARTPHONE_INSTRUCTIONS = 'スマートフォン: 下のボタンでコードをコピー → 任意のページをブックマークし、URL をコピーしたコードに書き換える → 公式カードデータベースでデッキの詳細ページを開き、アドレスバーにブックマーク名を入力して選ぶ';
 
 /** ブックマークレットの登録・コピー手順と失敗時の手動コピー欄を表示する。 */
 export function BookmarkletGuide() {
@@ -31,7 +31,7 @@ export function BookmarkletGuide() {
   return <details>
     <summary>公式カードデータベースから取り込む</summary>
     <div className="ImportView-guide">
-      <p>PC: 下のリンクをブックマークバーへドラッグ → 公式カードデータベース（遊戯王ニューロン）で自分のデッキの詳細ページを開く → ブックマークを実行</p>
+      <p>PC: 下のリンクをブックマークバーへドラッグ → 公式カードデータベース（遊戯王ニューロン）でデッキの詳細ページを開く → ブックマークを実行</p>
       <p>{SMARTPHONE_INSTRUCTIONS}</p>
       <div className="ImportView-actions">
         <a ref={element => element?.setAttribute('href', bookmarklet)}

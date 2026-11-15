@@ -38,7 +38,7 @@ export function ImportView({ onImport, showDbStatus: shouldShowDbStatus = true }
         {errors.map(renderError)}
       </ul>}
       {shouldShowDbStatus && state.status === 'loading'
-        && <p role="status">カードデータを読み込み中</p>}
+        && <p role="status">カードDBを読み込み中…</p>}
       {shouldShowDbStatus && state.status === 'error' && <div>
         <p role="alert">{state.error}</p><Button onClick={state.retry}>再試行</Button>
       </div>}

@@ -64,7 +64,7 @@ export function createCardDbLoader(
         next = readCardDbFile(file);
       }
     } catch {
-      next = { status: 'error', error: 'カードDBの通信またはJSONの読み込みに失敗しました。再試行してください' };
+      next = { status: 'error', error: 'カードDBの取得または JSON の読み込みに失敗しました。再試行してください' };
     }
     publish(next);
     return next;

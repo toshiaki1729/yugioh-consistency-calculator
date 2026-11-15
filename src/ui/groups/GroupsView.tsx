@@ -30,7 +30,7 @@ function DeleteGroupDialog({ group, deck, onClose, onDelete }: {
     <p>「{group.name}」を削除しますか？</p>
     {references.length > 0 && <>
       <ul>{references.map(pattern => <li key={pattern.id}>{pattern.name}</li>)}</ul>
-      <p>これらのパターンから該当スロットも削除されます</p>
+      <p>これらのパターンから該当するスロットも削除されます。</p>
     </>}
     <div className="GroupsView-actions">
       <Button onClick={onClose}>キャンセル</Button>
@@ -65,7 +65,7 @@ export function GroupsView({ deck }: { deck: Deck }) {
   }
   return <div className="GroupsView">
     {groups.length === 0 ? <EmptyState>
-      <p>カードグループを作ると、条件に合うカードをまとめて初動パターンに使えます</p>
+      <p>カードグループを作ると、条件に合うカードをまとめて初動パターンに使えます。</p>
       <Button variant="primary" onClick={createGroup}>グループを作成</Button>
     </EmptyState> : <>
       <section className="GroupsView-sidebar" aria-label="グループ一覧">

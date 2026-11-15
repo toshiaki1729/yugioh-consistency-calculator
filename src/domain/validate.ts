@@ -39,7 +39,7 @@ export function validateAppState(
   const unique = validateUniqueIds(state.decks, 'アプリ状態のデッキ');
   if (!unique.ok) return unique;
   if (state.activeDeckId !== null && !unique.value.has(state.activeDeckId)) {
-    return failValidation('アプリ状態.activeDeckId', '選択中のデッキが存在しません');
+    return failValidation('アプリ状態.activeDeckId', '選択中のデッキがありません');
   }
   return { ok: true, value: { state, droppedSlots } };
 }

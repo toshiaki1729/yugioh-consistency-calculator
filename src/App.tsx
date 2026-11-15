@@ -73,10 +73,10 @@ function AppEditor({ activeDeck, activeTab, onSelect, onImport }: {
       ? <DeckView key={activeDeck.id} deck={activeDeck} onImport={onImport} /> : emptyDeck },
     { id: 'groups', label: 'カードグループ', content: activeDeck
       ? <GroupsView key={activeDeck.id} deck={activeDeck} />
-      : <EmptyState>デッキがありません</EmptyState> },
+      : <EmptyState>デッキがありません。新規デッキを作成してください。</EmptyState> },
     { id: 'patterns', label: '初動パターン', content: activeDeck
       ? <PatternsView key={activeDeck.id} deck={activeDeck} />
-      : <EmptyState>デッキがありません</EmptyState> },
+      : <EmptyState>デッキがありません。新規デッキを作成してください。</EmptyState> },
   ];
   return <Tabs activeId={activeTab} onSelect={onSelect} items={items} />;
 }

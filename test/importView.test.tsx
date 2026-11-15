@@ -79,7 +79,7 @@ describe('デッキの取り込み画面', () => {
     const fetcher = vi.fn<typeof fetch>().mockImplementationOnce(() => new Promise(resolve => { respond = resolve; }))
       .mockResolvedValueOnce(new Response(JSON.stringify(file)));
     const user = setup({ loader: createCardDbLoader(fetcher) });
-    expect(within(screen.getByRole('dialog')).getByText('カードデータを読み込み中')).toBeVisible();
+    expect(within(screen.getByRole('dialog')).getByText('カードDBを読み込み中…')).toBeVisible();
     expect(location.hash).toBe('');
     expect(screen.queryByRole('button', { name: '取り込みを確定' })).not.toBeInTheDocument();
     await act(async () => { respond(new Response('', { status: 503 })); });
@@ -161,7 +161,7 @@ describe('デッキの取り込み画面', () => {
     const user = setup();
     fireEvent.change(screen.getByLabelText(pasteLabel), { target: { value: '#コメント\nメイン\n61 灰流うらら' } });
     await user.click(screen.getByRole('button', { name: '取り込む' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('3 行目: 枚数は1〜60の整数で指定してください');
+    expect(screen.getByRole('alert')).toHaveTextContent('3 行目: 枚数は 1〜60 の整数で指定してください');
     act(() => {
       history.replaceState(null, '', '#import=%%%');
       window.dispatchEvent(new Event('hashchange'));

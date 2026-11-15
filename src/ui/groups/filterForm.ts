@@ -40,18 +40,18 @@ export function defaultPredicate(kind: Predicate['kind']): Predicate {
 export function rowError(predicate: Predicate): string | undefined {
   if ('text' in predicate) {
     if (!normalizeForMatch(predicate.text)) return 'キーワードを入力してください';
-    if (predicate.text.length > MAX_KEYWORD_LENGTH) return 'キーワードは100文字以下にしてください';
+    if (predicate.text.length > MAX_KEYWORD_LENGTH) return 'キーワードは 100 文字以下にしてください';
   } else if ('range' in predicate) {
     const { min, max } = predicate.range;
     if (min === undefined && max === undefined) return '以上・以下のどちらかを入力してください';
     const hasInvalidBound = [min, max].some(value => value !== undefined
       && (!Number.isInteger(value) || value < MIN_NUMERIC_VALUE || value > MAX_NUMERIC_VALUE));
     if (hasInvalidBound) {
-      return '数値は0〜99999の整数で入力してください';
+      return '数値は 0〜99999 の整数で入力してください';
     }
     if (min !== undefined && max !== undefined && min > max) return '最小値は最大値以下にしてください';
   } else if (('values' in predicate ? predicate.values : predicate.cardIds).length === 0) {
-    return '1つ以上選んでください';
+    return '1 つ以上選んでください';
   }
   return undefined;
 }

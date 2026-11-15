@@ -111,7 +111,7 @@ describe('デッキ編集', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('503');
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('combobox', { name: 'カードを検索' })).toBeDisabled();
-    await user.click(screen.getByRole('button', { name: 'カードDBを再試行' }));
+    await user.click(screen.getByRole('button', { name: '再試行' }));
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'カードを検索' })).toBeEnabled());
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('デッキ編集', () => {
     expect(screen.getByText('カードDBを読み込み中…')).toBeVisible();
     expect(screen.getByText('保存済みのカード名')).toBeVisible();
     expect(screen.getAllByText('未取得')).toHaveLength(2);
-    expect(screen.getAllByText(/グループへ手動追加/)).toHaveLength(2);
+    expect(screen.getAllByText(/グループに手動で追加/)).toHaveLength(2);
     expect(screen.getByText(/計算できません（60 枚まで）/)).toHaveTextContent('61 枚');
     const row = screen.getByRole('listitem', { name: '保存済みのカード名' });
     expect(within(row).getByRole('button', { name: '枚数を増やす' })).toBeDisabled();
@@ -203,7 +203,8 @@ describe('ヘッダー', () => {
       await user.click(header.getByRole('button', { name: 'デッキ削除' }));
       await user.click(screen.getByRole('button', { name: '削除する' }));
     }
-    expect(screen.getByText('デッキがありません。新規デッキを作成してください。')).toBeVisible();
+    expect(within(screen.getByRole('tabpanel', { name: 'デッキ' }))
+      .getByText('デッキがありません。新規デッキを作成してください。')).toBeVisible();
     expect(header.getByRole('button', { name: 'JSON 書き出し' })).toBeDisabled();
   });
 
@@ -211,7 +212,7 @@ describe('ヘッダー', () => {
     const { user } = setup();
     const input = screen.getByLabelText('デッキ JSON ファイル');
     await user.upload(input, new File(['{broken'], 'broken.json', { type: 'application/json' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('JSON ファイルを解析できません');
+    expect(await screen.findByRole('alert')).toHaveTextContent('JSON ファイルを読み込めません');
     await user.click(screen.getByRole('button', { name: '読み込みエラーを閉じる' }));
     const imported = createInitialState().decks[0];
     imported.name = '読み込みデッキ';

@@ -16,7 +16,7 @@ export function ImportDialog({ payload, onClose, onImported }: {
   const resolved = useMemo(() =>
     database ? resolveImport(payload, database) : null, [payload, database]);
   return <Dialog open title="デッキを取り込む" onClose={onClose}>
-    {state.status === 'loading' && <p role="status">カードデータを読み込み中</p>}
+    {state.status === 'loading' && <p role="status">カードDBを読み込み中…</p>}
     {state.status === 'error' && <div>
       <p role="alert">{state.error}</p><Button onClick={state.retry}>再試行</Button>
     </div>}

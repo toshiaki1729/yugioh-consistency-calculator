@@ -147,12 +147,12 @@ export function importDeckJson(
   try {
     value = JSON.parse(text) as unknown;
   } catch {
-    return { ok: false, error: 'JSON ファイルを解析できません。形式を確認してください。' };
+    return { ok: false, error: 'JSON ファイルを読み込めません。形式を確認してください。' };
   }
   if (typeof value !== 'object' || value === null || !('format' in value)
     || value.format !== 'shodou-calc-deck' || !('version' in value)
     || value.version !== DECK_FILE_VERSION || !('deck' in value)) {
-    return { ok: false, error: 'デッキファイルの形式またはバージョンが対応していません。' };
+    return { ok: false, error: 'このデッキファイルの形式またはバージョンには対応していません。' };
   }
   const checked = validateDeck(value.deck);
   return checked.ok ? { ok: true, value: copyDeckWithNewIds(checked.value, newId) } : checked;

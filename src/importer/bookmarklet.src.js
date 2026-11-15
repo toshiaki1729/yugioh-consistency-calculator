@@ -79,7 +79,7 @@
     frame.id = 'shodou-calc-import-copy';
     frame.style.cssText = 'position:fixed;inset:16px;z-index:2147483647;background:white;color:black;padding:16px;border:1px solid black;overflow:auto';
     var label = document.createElement('p');
-    label.textContent = '以下のJSONをコピーして、アプリの取り込み欄に貼り付けてください。';
+    label.textContent = '以下の JSON をコピーして、アプリの取り込み欄に貼り付けてください。';
     var close = document.createElement('button');
     close.type = 'button';
     close.textContent = '閉じる';

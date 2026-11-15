@@ -84,7 +84,7 @@ function DeckInput({ deck, section, onSectionChange, onImport, onAdd, onCreate }
     </section>
     {dbState.status === 'loading' && <p role="status">カードDBを読み込み中…</p>}
     {dbState.status === 'error' && <div className="DeckView-dbError">
-      <p role="alert">{dbState.error}</p><Button onClick={dbState.retry}>カードDBを再試行</Button>
+      <p role="alert">{dbState.error}</p><Button onClick={dbState.retry}>再試行</Button>
     </div>}
     <section ref={addSection} className="DeckView-add" aria-labelledby="deck-add-heading">
       <h2 id="deck-add-heading">カードを追加</h2>

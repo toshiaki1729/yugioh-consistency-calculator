@@ -36,10 +36,10 @@ function KeywordFields({ predicate, onChange, errorId }: PredicateFieldsProps<
       <Checkbox label="ペンデュラム効果を含む" checked={predicate.includePendulum}
         onChange={handlePendulum} />}
     {predicate.kind === 'archetype' && <p className="FilterBuilder-note">
-      テーマ判定はカード名・読み・『〜カードとしても扱う』の記述による近似です。違う場合はグループで手動追加・除外してください
+      テーマ判定はカード名・読み・『〜カードとしても扱う』の記述による近似です。一致しない場合は手動で追加・除外してください。
     </p>}
     {predicate.kind === 'mentionsName' && <p className="FilterBuilder-note">
-      『X』の記述による近似です（『X』モンスター のようなテーマ指定は除きます）。違う場合は手動で追加・除外してください
+      テキスト内の『X』の記述による近似です（『X』モンスターのようなテーマ指定は除きます）。一致しない場合は手動で追加・除外してください。
     </p>}
   </>;
 }

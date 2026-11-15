@@ -604,7 +604,7 @@ describe('デッキ JSON', () => {
     invalid.groups = [];
     const result = importDeckJson(exportDeckJson(invalid));
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain('存在しません');
+    if (!result.ok) expect(result.error).toContain('がありません');
   });
 
   it('5MBを文字数でなくUTF-8バイト数で判定し、境界を含めて許可する', () => {

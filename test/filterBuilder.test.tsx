@@ -171,7 +171,7 @@ describe('条件ビルダー', () => {
     await user.clear(screen.getByLabelText('以上'));
     expect(screen.getByRole('status')).toHaveTextContent('どちらかを入力');
     await user.type(screen.getByLabelText('以下'), '100000');
-    expect(screen.getByRole('status')).toHaveTextContent('0〜99999の整数');
+    expect(screen.getByRole('status')).toHaveTextContent('0〜99999 の整数');
     await settle();
     expect(onChange).toHaveBeenLastCalledWith(empty);
     await user.clear(screen.getByLabelText('以下'));
@@ -183,7 +183,7 @@ describe('条件ビルダー', () => {
   it('種類変更で値を初期化し、全種族・属性・モンスター種類を選べる', async () => {
     const { user, onChange } = setup({ op: 'and', children: [level] });
     await user.selectOptions(screen.getByLabelText('条件の種類'), 'race');
-    expect(screen.getByRole('status')).toHaveTextContent('1つ以上選んでください');
+    expect(screen.getByRole('status')).toHaveTextContent('1 つ以上選んでください');
     expect(screen.getAllByRole('checkbox')).toHaveLength(27);
     for (const race of races) expect(screen.getByLabelText(race)).not.toBeChecked();
     await user.click(screen.getByLabelText('ドラゴン族'));
@@ -212,7 +212,7 @@ describe('条件ビルダー', () => {
     expect(onChange).toHaveBeenLastCalledWith({ op: 'and', children: [{ op: 'pred', pred: { kind: 'textContains', text: '召喚', includePendulum: false } }] });
     await user.selectOptions(screen.getByLabelText('条件の種類'), 'archetype');
     expect(screen.getByLabelText('キーワード')).toHaveValue('');
-    expect(screen.getByText(/テーマ判定はカード名・読み/)).toHaveTextContent('グループで手動追加・除外');
+    expect(screen.getByText(/テーマ判定はカード名・読み/)).toHaveTextContent('手動で追加・除外');
     await user.selectOptions(screen.getByLabelText('条件の種類'), 'mentionsName');
     expect(screen.getByText(/『X』の記述による近似/)).toHaveTextContent('手動で追加・除外');
   });

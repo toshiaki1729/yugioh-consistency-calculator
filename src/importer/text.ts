@@ -17,7 +17,7 @@ export function parseDeckText(
   text: string, isKnownName: (name: string) => boolean,
 ): ParsedDeckText {
   if (text.length > MAX_IMPORT_LENGTH) {
-    return { payload: null, errors: [{ line: 1, message: '取り込み文字列は200,000文字以下にしてください' }] };
+    return { payload: null, errors: [{ line: 1, message: '取り込み文字列は 200,000 文字以下にしてください' }] };
   }
   if (text.trimStart().startsWith('{')) return parseJsonText(text);
   const headings: Record<string, Section> = {
@@ -39,11 +39,11 @@ export function parseDeckText(
     }
     const { name, count } = parseCardLine(line, isKnownName);
     if (!name || name.length > MAX_CARD_NAME_LENGTH) {
-      errors.push({ line: i + 1, message: 'カード名は1〜100文字で指定してください' });
+      errors.push({ line: i + 1, message: 'カード名は 1〜100 文字で指定してください' });
     } else if (!Number.isInteger(count) || count < MIN_ENTRY_COUNT || count > MAX_ENTRY_COUNT) {
-      errors.push({ line: i + 1, message: '枚数は1〜60の整数で指定してください' });
+      errors.push({ line: i + 1, message: '枚数は 1〜60 の整数で指定してください' });
     } else if (cards.length >= MAX_ENTRIES) {
-      errors.push({ line: i + 1, message: 'カードの件数は200件以下にしてください' });
+      errors.push({ line: i + 1, message: 'カードの件数は 200 件以下にしてください' });
     } else cards.push({ name, count, section });
   }
   if (!cards.length && !errors.length) errors.push({ line: 1, message: 'カードの行を入力してください' });
@@ -55,7 +55,7 @@ function parseJsonText(text: string): ParsedDeckText {
   try {
     input = JSON.parse(text);
   } catch {
-    return { payload: null, errors: [{ line: 1, message: '取り込みJSONを読み込めません' }] };
+    return { payload: null, errors: [{ line: 1, message: '取り込み JSON を読み込めません' }] };
   }
   const result = validatePayload(input);
   return result.ok ? { payload: result.value, errors: [] }

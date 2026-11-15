@@ -136,7 +136,7 @@ describe('空状態と出典', () => {
     await user.click(screen.getByRole('tab', { name: 'カードグループ' }));
     expect(screen.getByText(/カードグループを作ると/)).toBeVisible();
     await user.click(screen.getByRole('tab', { name: '初動パターン' }));
-    expect(screen.getByText(/先に「カードグループ」タブ/)).toHaveTextContent('特定のカード');
+    expect(screen.getByText(/「カードグループ」タブで作成したグループ/)).toHaveTextContent('特定のカード');
     expect(screen.getByText('パターンを設定して「計算する」を押してください。')).toBeVisible();
     const footer = screen.getByRole('contentinfo');
     expect(within(footer).getByRole('link', { name: 'yaml-yugi' })).toHaveAttribute('href', 'https://github.com/DawnbrandBots/yaml-yugi');

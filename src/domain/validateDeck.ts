@@ -127,7 +127,7 @@ function checkSlotReferences(
     }
     if (!shouldDropDanglingSlots) return failValidation(
       `${location}のパターン『${pattern.name}』のスロット『${candidate.id}』`,
-      `参照先のグループ『${candidate.source.groupId}』が存在しません`,
+      `参照先のグループ『${candidate.source.groupId}』がありません`,
     );
     droppedSlots++;
   }

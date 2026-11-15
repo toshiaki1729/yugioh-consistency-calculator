@@ -33,7 +33,7 @@ export function CalculationResults({ results }: { results: HandResult[] }) {
     <p>計算時間 {elapsedSeconds} 秒</p>
     <h2>パターン別（先攻 5 枚）</h2>
     <ul className="result-patterns">{activeDeck?.patterns.map(renderPattern)}</ul>
-    {hasSamplingInversion && <p>サンプリングの誤差により、全体の値が単独パターンの値を下回ることがあります</p>}
+    {hasSamplingInversion && <p>サンプリングの誤差により、全体の値が単独パターンの値を下回ることがあります。</p>}
   </>;
 }
 
