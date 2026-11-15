@@ -10,8 +10,8 @@ import type { FilterBuilderProps } from './FilterBuilder';
 import { PredicateFields } from './PredicateFields';
 
 const predicateLabels: Record<Predicate['kind'], string> = {
-  nameContains: 'カード名キーワード', textContains: 'テキストキーワード', archetype: 'テーマ「X」カード',
-  mentionsName: '「X」が記されたカード', cardKind: 'カードの種類', monsterType: 'モンスターの種類',
+  nameContains: 'カード名キーワード', textContains: 'テキストキーワード', archetype: 'テーマ「○○」カード',
+  mentionsName: '「○○」が記されたカード', cardKind: 'カードの種類', monsterType: 'モンスターの種類',
   attribute: '属性', race: '種族', level: 'レベル', rank: 'ランク', link: 'リンク', atk: '攻撃力',
   def: '守備力', scale: 'Pスケール', property: '魔法罠の種類', cards: '特定のカード',
 };

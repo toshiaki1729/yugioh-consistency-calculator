@@ -39,7 +39,7 @@ function KeywordFields({ predicate, onChange, errorId }: PredicateFieldsProps<
       テーマ判定はカード名・読み・『〜カードとしても扱う』の記述による近似です。一致しない場合は手動で追加・除外してください。
     </p>}
     {predicate.kind === 'mentionsName' && <p className="FilterBuilder-note">
-      テキスト内の『X』の記述による近似です（『X』モンスターのようなテーマ指定は除きます）。一致しない場合は手動で追加・除外してください。
+      テキスト内の『○○』の記述による近似です（『○○』モンスターのようなテーマ指定は除きます）。一致しない場合は手動で追加・除外してください。
     </p>}
   </>;
 }

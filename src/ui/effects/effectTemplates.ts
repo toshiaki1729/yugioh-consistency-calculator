@@ -9,7 +9,7 @@ export const EFFECT_TEMPLATES: EffectTemplate[] = [
     oncePerTurn: false, firstOnly: false, drawLock: 'none',
     steps: [{ kind: 'draw', count: 1 }],
   } },
-  { name: '上から除外して 2 枚ドロー', settings: {
+  { name: '上から裏側で除外して 2 枚ドロー', settings: {
     oncePerTurn: true, firstOnly: false, drawLock: 'none',
     steps: [{ kind: 'banishTop', count: 10 }, { kind: 'draw', count: 2 }],
   } },

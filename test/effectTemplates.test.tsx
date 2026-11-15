@@ -42,7 +42,7 @@ const stepRow = (index: number) => within(screen.getByRole('group', { name: `手
 const templates: { name: string; oncePerTurn: boolean; drawLock: DrawEffect['drawLock'];
   steps: DrawEffect['steps']; missingRow?: number }[] = [
   { name: '1 枚ドロー', oncePerTurn: false, drawLock: 'none', steps: [{ kind: 'draw', count: 1 }] },
-  { name: '上から除外して 2 枚ドロー', oncePerTurn: true, drawLock: 'none',
+  { name: '上から裏側で除外して 2 枚ドロー', oncePerTurn: true, drawLock: 'none',
     steps: [{ kind: 'banishTop', count: 10 }, { kind: 'draw', count: 2 }] },
   { name: 'めくって 1 枚を手札に', oncePerTurn: true, drawLock: 'turn',
     steps: [{ kind: 'excavate', count: 6, target: null }] },
@@ -63,7 +63,7 @@ describe('ドロー効果のひな形', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(readEffect()).toEqual(original);
     expect(editor().getByLabelText('最初の効果としてだけ使える')).toBeChecked();
-    expect(stepRow(1).getByLabelText('除外枚数')).toHaveValue('2');
+    expect(stepRow(1).getByLabelText('裏側で除外する枚数')).toHaveValue('2');
     expect(stepRow(2).getByLabelText('ドロー枚数')).toHaveValue('3');
     storage.setItem.mockClear();
     await user.click(editor().getByRole('button', { name: template.name }));

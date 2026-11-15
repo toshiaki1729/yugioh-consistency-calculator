@@ -214,7 +214,7 @@ describe('条件ビルダー', () => {
     expect(screen.getByLabelText('キーワード')).toHaveValue('');
     expect(screen.getByText(/テーマ判定はカード名・読み/)).toHaveTextContent('手動で追加・除外');
     await user.selectOptions(screen.getByLabelText('条件の種類'), 'mentionsName');
-    expect(screen.getByText(/『X』の記述による近似/)).toHaveTextContent('手動で追加・除外');
+    expect(screen.getByText(/『○○』の記述による近似/)).toHaveTextContent('手動で追加・除外');
   });
 
   it('カード選択肢を名前順にし、未取得カードも選択できる', async () => {

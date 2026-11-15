@@ -82,7 +82,7 @@ describe('ドロー効果の編集', () => {
     expect(row.getByRole('button', { name: '手順を削除' })).toBeDisabled();
     await user.selectOptions(row.getByLabelText('手順の種類'), 'banishTop');
     expect(readEffects()[0].steps).toEqual([{ kind: 'banishTop', count: 1 }]);
-    fireEvent.change(row.getByLabelText('除外枚数'), { target: { value: '10' } });
+    fireEvent.change(row.getByLabelText('裏側で除外する枚数'), { target: { value: '10' } });
     await user.selectOptions(row.getByLabelText('手順の種類'), 'excavate');
     expect(readEffects()[0].steps).toEqual([{ kind: 'excavate', count: 1, target: null }]);
     expect(within(row.getByLabelText('対象')).getAllByRole('option')[0]).toHaveTextContent('何でも');
@@ -106,7 +106,7 @@ describe('ドロー効果の編集', () => {
   });
 
   it.each([
-    ['draw', 'ドロー枚数', 5], ['banishTop', '除外枚数', 20], ['excavate', 'めくる枚数', 10],
+    ['draw', 'ドロー枚数', 5], ['banishTop', '裏側で除外する枚数', 20], ['excavate', 'めくる枚数', 10],
   ])('%s の空・範囲外の入力は保存せず、両端を保存する', async (kind, label, max) => {
     const { user, readEffects, storage } = await setup();
     await user.click(screen.getByRole('button', { name: '効果を追加' }));

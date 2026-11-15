@@ -38,11 +38,11 @@ export function DrawFields({ step, onChange }: {
     onChange={count => onChange({ ...step, count })} />;
 }
 
-/** デッキの上から除外する枚数を編集する。 */
+/** デッキの上から裏側で除外する枚数を編集する。 */
 export function BanishFields({ step, onChange }: {
   step: Extract<EffectStep, { kind: 'banishTop' }>; onChange: (step: EffectStep) => void;
 }) {
-  return <StepNumberField label="除外枚数" value={step.count}
+  return <StepNumberField label="裏側で除外する枚数" value={step.count}
     min={MIN_BANISH_COUNT} max={MAX_BANISH_COUNT}
     onChange={count => onChange({ ...step, count })} />;
 }

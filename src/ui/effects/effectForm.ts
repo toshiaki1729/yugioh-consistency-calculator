@@ -15,7 +15,7 @@ const DEFAULT_DESTINATION = 'graveyard';
 
 /** 手順の種類の表示名。 */
 export const stepLabels: Record<EffectStep['kind'], string> = {
-  draw: 'ドロー', banishTop: 'デッキの上から除外', excavate: 'めくって 1 枚を手札に',
+  draw: 'ドロー', banishTop: 'デッキの上から裏側で除外', excavate: 'めくって 1 枚を手札に',
   search: 'サーチ', handCost: '手札から 1 枚を手放す',
 };
 
@@ -50,7 +50,7 @@ export function isStepReady(step: StepDraft, sources: SlotOption[]): step is Eff
 export function summarizeStep(step: EffectStep): string {
   switch (step.kind) {
     case 'draw': return `${step.count} 枚ドロー`;
-    case 'banishTop': return `デッキの上から ${step.count} 枚を除外`;
+    case 'banishTop': return `デッキの上から ${step.count} 枚を裏側で除外`;
     case 'excavate': return `${step.count} 枚めくって 1 枚を手札に`;
     case 'search': return 'サーチ';
     case 'handCost': return step.destination === 'graveyard'
