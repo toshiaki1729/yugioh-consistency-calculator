@@ -7,6 +7,7 @@ import { CardDbProvider } from './carddb/useCardDb';
 import type { CardDb, createCardDbLoader } from './carddb/loader';
 import { DeckHeader, NewDeckButton } from './ui/layout/DeckHeader';
 import { DeckView } from './ui/deck/DeckView';
+import { GroupsView } from './ui/groups/GroupsView';
 import { EmptyState } from './ui/common/EmptyState';
 import { decodePayload } from './importer/payload';
 import type { ImportPayload } from './importer/payload';
@@ -44,7 +45,9 @@ function AppContent() {
           { id: 'deck', label: 'デッキ', content: activeDeck
             ? <DeckView key={activeDeck.id} deck={activeDeck} onImport={openImport} />
             : <><EmptyState><p>デッキがありません。新規デッキを作成してください。</p><NewDeckButton /></EmptyState><ImportView onImport={openImport} /></> },
-          { id: 'groups', label: 'カードグループ' },
+          { id: 'groups', label: 'カードグループ', content: activeDeck
+            ? <GroupsView key={activeDeck.id} deck={activeDeck} />
+            : <EmptyState>デッキがありません</EmptyState> },
           { id: 'patterns', label: '初動パターン' },
         ]}
       />

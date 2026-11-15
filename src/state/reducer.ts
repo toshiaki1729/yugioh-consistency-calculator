@@ -33,6 +33,7 @@ export type Action =
   | { type: 'customCard/delete'; cardId: CardId }
   | { type: 'pageData/update'; pageData: Record<CardId, CardData> }
   | { type: 'group/create'; name?: string }
+  | { type: 'group/duplicate'; groupId: string }
   | { type: 'group/edit'; groupId: string; changes: Partial<Omit<CardGroup, 'id'>> }
   | { type: 'group/delete'; groupId: string }
   | { type: 'pattern/create'; name?: string }
@@ -179,6 +180,12 @@ export function createReducer(
         case 'group/create':
           deck.groups.push({ id: newId(), name: action.name ?? '新しいグループ', filter: { op: 'and', children: [] }, include: [], exclude: [] });
           break;
+        case 'group/duplicate': {
+          const group = deck.groups.find(item => item.id === action.groupId);
+          if (!group) return { ...state, lastError: '対象のグループがありません。' };
+          deck.groups.push({ ...structuredClone(group), id: newId(), name: `${group.name.slice(0, 46)}のコピー` });
+          break;
+        }
         case 'group/edit': {
           const group = deck.groups.find(item => item.id === action.groupId);
           if (!group) return { ...state, lastError: '対象のグループがありません。' };

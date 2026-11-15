@@ -217,6 +217,27 @@ describe('状態の編集', () => {
     expect(h.deck.patterns[0].slots[0].source).toEqual({ type: 'card', cardId: 'k1' });
   });
 
+  it('グループを別IDで複製し、条件・手動設定と元の参照を保持する', () => {
+    const h = harness();
+    h.send({ type: 'group/edit', groupId: 'g1', changes: { name: 'あ'.repeat(50),
+      filter: { op: 'not', child: { op: 'pred', pred: { kind: 'cards', cardIds: ['k1'] } } }, include: ['k2'], exclude: ['k3'] } });
+    const original = structuredClone(h.deck.groups[0]);
+    h.send({ type: 'group/duplicate', groupId: 'g1' });
+    expect(h.state.lastError).toBeNull();
+    const copy = h.deck.groups[1];
+    expect(copy.id).not.toBe(original.id);
+    expect(copy.name).toHaveLength(50);
+    expect(copy.name.endsWith('のコピー')).toBe(true);
+    expect({ ...copy, id: original.id, name: original.name }).toEqual(original);
+    expect(h.deck.patterns[0].slots[0].source).toEqual({ type: 'group', groupId: 'g1' });
+    h.send({ type: 'group/edit', groupId: copy.id, changes: { include: [], exclude: [], filter: { op: 'and', children: [] } } });
+    expect(h.deck.groups[0]).toEqual(original);
+    const before = h.state.app;
+    h.send({ type: 'group/duplicate', groupId: 'missing' });
+    expect(h.state.app).toBe(before);
+    expect(h.state.lastError).toBe('対象のグループがありません。');
+  });
+
   it('パターンとスロットを編集し、有効切替・並べ替え・設定変更を行う', () => {
     const h = harness();
     h.send({ type: 'pattern/create', name: '二つ目' });
@@ -246,6 +267,7 @@ describe('上限とエラー時の原子性', () => {
     ['デッキ', (a: AppState) => { a.decks = Array.from({ length: 50 }, (_, i) => ({ ...deck(), id: `d${i}` })); }, { type: 'deck/create' }],
     ['エントリ', (a: AppState) => { a.decks[0].entries = Array.from({ length: 200 }, (_, i) => entry(`k${i}`)); }, { type: 'entry/add', cardId: 'k201', name: '追加', section: 'main' }],
     ['グループ', (a: AppState) => { a.decks[0].groups = Array.from({ length: 200 }, (_, i) => group(`g${i}`)); }, { type: 'group/create' }],
+    ['グループの複製', (a: AppState) => { a.decks[0].groups = Array.from({ length: 200 }, (_, i) => group(`g${i}`)); }, { type: 'group/duplicate', groupId: 'g1' }],
     ['パターン', (a: AppState) => { a.decks[0].patterns = Array.from({ length: 200 }, (_, i) => pattern(`p${i}`, [])); }, { type: 'pattern/create' }],
     ['カスタムカード', (a: AppState) => { a.decks[0].customCards = Array.from({ length: 200 }, (_, i) => card(`c:${i}`)); }, { type: 'customCard/add', card: { name: '追加', kind: 'trap', monsterTypes: [], text: '' } }],
     ['スロット', (a: AppState) => { a.decks[0].patterns[0].slots = Array.from({ length: 8 }, (_, i) => slot(`s${i}`)); }, { type: 'slot/add', patternId: 'p1', slot: { source: { type: 'group', groupId: 'g1' }, count: 1, distinctNames: false } }],

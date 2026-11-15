@@ -1,0 +1,16 @@
+.GroupsView { display: grid; gap: var(--space-4); min-width: 0; overflow-wrap: anywhere; }
+.GroupsView-sidebar, .GroupsView-detail, .GroupsView-editor, .GroupsView-manual { display: grid; align-content: start; gap: var(--space-3); min-width: 0; }
+.GroupsView-list, .GroupsView-cards { list-style: none; padding: 0; margin: 0; }
+.GroupsView-list { display: grid; gap: var(--space-2); }
+.GroupsView-choice { display: grid; gap: var(--space-1); width: 100%; height: auto; min-height: 40px; padding: var(--space-2); text-align: left; overflow-wrap: anywhere; }
+.GroupsView-choice[aria-pressed='true'] { background: var(--accent-weak); }
+.GroupsView-note { color: var(--text-muted); font-size: var(--font-size-small); }
+.GroupsView-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.GroupsView-cardRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+.GroupsView-cardRow > .GroupsView-actions { grid-column: 1 / -1; }
+.GroupsView-cardName { min-width: 0; }
+.GroupsView-excluded .CardSummary-name { text-decoration: line-through; }
+.GroupsView-manual > .Button { justify-self: start; }
+@media (width >= 900px) {
+  .GroupsView:has(.GroupsView-sidebar) { grid-template-columns: 220px minmax(0, 1fr); }
+}
