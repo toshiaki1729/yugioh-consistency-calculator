@@ -1,4 +1,5 @@
 import type { CardData } from './types';
+import { normalizeForMatch } from './normalize';
 
 const ruleNames = new WeakMap<CardData, string[]>();
 
@@ -31,6 +32,12 @@ export function getRuleNames(card: CardData): string[] {
   const result = [...names];
   ruleNames.set(card, result);
   return result;
+}
+
+/** 種類違いの判定に使う名前を、未取得時の保存名も含めて正規化する。 */
+export function getCardNameKey(card: CardData | undefined, entryName: string): string {
+  const name = card ? getRuleNames(card)[0] ?? card.name : entryName;
+  return normalizeForMatch(name);
 }
 
 /** 手札で効く名前の宣言文だけを除き、他のカード名の記述を残す。 */

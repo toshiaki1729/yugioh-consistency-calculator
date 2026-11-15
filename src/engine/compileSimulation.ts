@@ -1,6 +1,8 @@
 import { isInGroup } from '../domain/filter';
+import { getCardNameKey } from '../domain/ruleNames';
 import type { CardData, CardId, CardTarget, Deck, Pattern } from '../domain/types';
 import type { SimulationInput, SimulationStep } from './simulateTypes';
+import { compileSlot } from './distinctGroups';
 
 /** メインデッキのカード番号に、スロット・条件・効果の対象を解決する。 */
 export function compileSimulation(
@@ -12,6 +14,11 @@ export function compileSimulation(
   const indices = new Map(cards.map((card, index) => [card.key, index]));
   const groups = new Map(deck.groups.map(group => [group.id, group]));
   const cardData = cards.map(card => resolveCard(card.key));
+  const getNameKey = (index: number) => {
+    const entry = deck.entries.find(item =>
+      item.section === 'main' && item.cardId === cards[index].key)!;
+    return getCardNameKey(cardData[index], entry.name);
+  };
   function resolveMembers(target: CardTarget): number[] {
     if (target.type === 'card') {
       const index = indices.get(target.cardId);
@@ -24,9 +31,7 @@ export function compileSimulation(
   }
   const patterns = active.map(pattern => ({
     id: pattern.id,
-    slots: pattern.slots.map(slot => ({
-      count: slot.count, distinct: slot.distinctNames, members: resolveMembers(slot.source),
-    })),
+    slots: pattern.slots.map(slot => compileSlot(slot, resolveMembers(slot.source), getNameKey)),
     conditions: pattern.conditions.map(({ target, ...condition }) => ({
       ...condition, members: resolveMembers(target),
     })),

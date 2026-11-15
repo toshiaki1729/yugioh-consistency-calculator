@@ -49,7 +49,7 @@ export function PatternEditor({ deck, pattern }: { deck: Deck; pattern: Pattern 
       <SlotRow key={slot.id} deck={deck} patternId={pattern.id} slot={slot} index={index}
         cards={cards} sources={sources} />)}
     {pattern.slots.length > 0 && <p id="distinct-description" className="PatternsView-note">
-      種類違い: 別々のカード（カードDB上の別カード）を必要枚数そろえる
+      種類違い: 名前が違うカードをそろえる（ルール上同名のカードは同じ種類として扱う）
     </p>}
     {sources.length === 0 &&
       <p className="PatternsView-note">メインデッキにカードを追加して、スロットの対象を選んでください。</p>}

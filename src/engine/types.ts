@@ -24,6 +24,8 @@ export interface EngineSlot {
   count: number;
   distinct: boolean;
   members: number[];
+  /** 同じ名前の所属クラスのまとまり。省略時は各クラスを別名として扱う。 */
+  distinctGroups?: number[][];
 }
 
 /** デッキに残す対象クラスと必要枚数。 */

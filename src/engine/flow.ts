@@ -22,6 +22,10 @@ export function createHandMatcher(
 }
 
 function createSingleSlotMatcher(slot: EngineSlot) {
+  if (slot.distinct && slot.distinctGroups) {
+    const groups = slot.distinctGroups;
+    return (hand: Uint8Array) => hasDistinctCapacity(groups, slot.count, hand);
+  }
   const members = Int32Array.from(slot.members);
   return (hand: Uint8Array) => {
     let available = 0;
@@ -34,8 +38,25 @@ function createSingleSlotMatcher(slot: EngineSlot) {
   };
 }
 
+function hasDistinctCapacity(groups: number[][], required: number, hand: Uint8Array) {
+  let available = 0;
+  for (const group of groups) {
+    for (let i = 0; i < group.length; i++) {
+      if (hand[group[i]] === 0) continue;
+      available++;
+      break;
+    }
+    if (available >= required) return true;
+  }
+  return false;
+}
+
 function hasSlotCapacity(slots: EngineSlot[], hand: Uint8Array) {
   for (const slot of slots) {
+    if (slot.distinct && slot.distinctGroups) {
+      if (!hasDistinctCapacity(slot.distinctGroups, slot.count, hand)) return false;
+      continue;
+    }
     let available = 0;
     for (let i = 0; i < slot.members.length; i++) {
       const count = hand[slot.members[i]];
@@ -46,11 +67,38 @@ function hasSlotCapacity(slots: EngineSlot[], hand: Uint8Array) {
   return true;
 }
 
+function connectSlot(
+  slot: EngineSlot, node: number, classNodes: Map<number, number>, nameNode: number,
+  demand: number, addEdge: (from: number, to: number, capacity: number) => number,
+) {
+  addEdge(0, node, slot.count);
+  if (!slot.distinct || !slot.distinctGroups) {
+    for (const member of slot.members) {
+      addEdge(node, classNodes.get(member)!, slot.distinct ? 1 : demand);
+    }
+    return nameNode;
+  }
+  for (const group of slot.distinctGroups) {
+    if (group.length === 1) {
+      addEdge(node, classNodes.get(group[0])!, 1);
+      continue;
+    }
+    // 名前の容量はスロット内だけに効かせ、他スロットの所属先へ流れないようにする。
+    addEdge(node, nameNode, 1);
+    for (const member of group) addEdge(nameNode, classNodes.get(member)!, demand);
+    nameNode++;
+  }
+  return nameNode;
+}
+
 function createFlowNetwork(pattern: EnginePattern, demand: number) {
 
   const members = Int32Array.from(new Set(pattern.slots.flatMap(slot => slot.members)));
   const slotCount = pattern.slots.length;
-  const sink = 1 + slotCount + members.length;
+  let nameNode = 1 + slotCount + members.length;
+  const nameCount = pattern.slots.flatMap(slot => slot.distinct ? slot.distinctGroups ?? [] : [])
+    .filter(group => group.length > 1).length;
+  const sink = nameNode + nameCount;
   const heads = new Int32Array(sink + 1).fill(-1);
   const targets: number[] = [];
   const next: number[] = [];
@@ -67,11 +115,7 @@ function createFlowNetwork(pattern: EnginePattern, demand: number) {
     return edge;
   };
   for (let j = 0; j < slotCount; j++) {
-    const slot = pattern.slots[j];
-    addEdge(0, 1 + j, slot.count);
-    for (const member of slot.members) {
-      addEdge(1 + j, classNodes.get(member)!, slot.distinct ? 1 : demand);
-    }
+    nameNode = connectSlot(pattern.slots[j], 1 + j, classNodes, nameNode, demand, addEdge);
   }
   for (let i = 0; i < members.length; i++) sinkEdges[i] = addEdge(1 + slotCount + i, sink, 0);
   const to = Int32Array.from(targets);

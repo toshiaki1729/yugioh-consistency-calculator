@@ -1,6 +1,8 @@
 import { isInGroup } from '../domain/filter';
+import { getCardNameKey } from '../domain/ruleNames';
 import type { CardData, CardId, Deck, Pattern, Slot } from '../domain/types';
 import type { EngineInput } from './types';
+import { compileSlot } from './distinctGroups';
 
 /** ドロー効果・上からの除外を使わない有効パターンをクラスに集約する。 */
 export function compileClassPatterns(
@@ -17,16 +19,19 @@ export function compileClassPatterns(
   const targets = [...slots, ...remaining.flat().map(condition => ({
     source: condition.target, distinctNames: false,
   }))];
-  const { classes, otherCount, members } = collectClasses(
+  const { classes, otherCount, members, classCardIds } = collectClasses(
     deck, counts, targets, slots.length, resolveCard,
   );
+  const getNameKey = (index: number) => {
+    const cardId = classCardIds[index];
+    const entry = deck.entries.find(item => item.section === 'main' && item.cardId === cardId)!;
+    return getCardNameKey(resolveCard(cardId), entry.name);
+  };
   let slotIndex = 0;
   let conditionIndex = slots.length;
   const patterns = possible.map((pattern, i) => ({
     id: pattern.id,
-    slots: pattern.slots.map(slot => ({
-      count: slot.count, distinct: slot.distinctNames, members: members[slotIndex++],
-    })),
+    slots: pattern.slots.map(slot => compileSlot(slot, members[slotIndex++], getNameKey)),
     conditions: remaining[i].map(condition => ({
       minRemaining: condition.count, members: members[conditionIndex++],
     })),
@@ -44,6 +49,7 @@ function collectClasses(
   const groups = new Map(deck.groups.map(group => [group.id, group]));
   const members = targets.map(() => [] as number[]);
   const classes: EngineInput['classes'] = [];
+  const classCardIds: CardId[] = [];
   const classIndices = new Map<string, number>();
   let otherCount = 0;
   for (const [cardId, count] of counts) {
@@ -78,8 +84,9 @@ function collectClasses(
       const index = classes.length;
       classIndices.set(key, index);
       classes.push({ key, count });
+      classCardIds.push(cardId);
       for (const targetIndex of membership) members[targetIndex].push(index);
     }
   }
-  return { classes, otherCount, members };
+  return { classes, otherCount, members, classCardIds };
 }

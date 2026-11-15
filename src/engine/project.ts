@@ -1,10 +1,13 @@
-import type { EngineInput, EnginePattern } from './types';
+import type { EngineInput, EnginePattern, EngineSlot } from './types';
 
 /** 単一パターンに必要なクラスだけを再集約する。 */
 export function project(input: EngineInput, pattern: EnginePattern): EngineInput {
   const classes: EngineInput['classes'] = [];
   const indices = new Map<string, number>();
-  const slots = pattern.slots.map(slot => ({ ...slot, members: [] as number[] }));
+  const classIndices = new Map<number, number>();
+  const slots: EngineSlot[] = pattern.slots.map(slot => ({
+    count: slot.count, distinct: slot.distinct, members: [],
+  }));
   const conditions = pattern.conditions.map(condition => ({
     ...condition, members: [] as number[],
   }));
@@ -42,7 +45,9 @@ export function project(input: EngineInput, pattern: EnginePattern): EngineInput
       for (const j of membership) slots[j].members.push(index);
       for (const j of conditionMembership) conditions[j].members.push(index);
     }
+    classIndices.set(i, indices.get(key)!);
   }
+  remapDistinctGroups(pattern.slots, slots, classIndices);
   return {
     ...input,
     classes,
@@ -50,4 +55,15 @@ export function project(input: EngineInput, pattern: EnginePattern): EngineInput
     patterns: [{ id: pattern.id, slots, conditions }],
     ...(input.impossiblePatternIds ? { impossiblePatternIds: [] } : {}),
   };
+}
+
+function remapDistinctGroups(
+  sources: EngineSlot[], slots: EngineSlot[], classIndices: Map<number, number>,
+) {
+  for (let i = 0; i < sources.length; i++) {
+    const groups = sources[i].distinctGroups;
+    if (!groups || !sources[i].distinct) continue;
+    const mapped = groups.map(group => group.map(index => classIndices.get(index)!));
+    if (mapped.some(group => group.length > 1)) slots[i].distinctGroups = mapped;
+  }
 }
