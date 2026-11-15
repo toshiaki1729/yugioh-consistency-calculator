@@ -1,7 +1,7 @@
-import type { EngineInput, HandResult, ProgressCallback } from './types';
+import type { CalculationInput, HandResult, ProgressCallback } from './types';
 
 /** Worker に送る計算要求。 */
-export interface RunMessage { type: 'run'; requestId: number; input: EngineInput }
+export interface RunMessage { type: 'run'; requestId: number; input: CalculationInput }
 /** 要求 ID を伴う Worker の進捗と完了通知。 */
 export type WorkerMessage =
   | { type: 'progress'; requestId: number; done: number; total: number }
@@ -59,7 +59,7 @@ export function createEngineClient(createWorker: () => EngineWorker = () =>
 
   function sendRequest(
     target: EngineWorker, request: PendingCalculation,
-    input: EngineInput, onProgress?: ProgressCallback,
+    input: CalculationInput, onProgress?: ProgressCallback,
   ) {
     const { id, finish } = request;
     target.onmessage = ({ data }) => {
@@ -86,7 +86,7 @@ export function createEngineClient(createWorker: () => EngineWorker = () =>
   }
 
   return {
-    run(input: EngineInput, onProgress?: ProgressCallback) {
+    run(input: CalculationInput, onProgress?: ProgressCallback) {
       pending?.cancel();
       const id = ++requestId;
       let resolve!: (outcome: CalculationOutcome) => void;

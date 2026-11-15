@@ -1,15 +1,15 @@
 import { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { useResolveCard } from '../../carddb/useCardDb';
-import { compile } from '../../engine/compile';
+import { compileCalculation } from '../../engine/compileCalculation';
 import type { EngineWorker } from '../../engine/client';
-import type { EngineInput, HandResult } from '../../engine/types';
+import type { CalculationInput, HandResult } from '../../engine/types';
 import { useAppState } from '../../state/store';
 import { FIRST_HAND_SIZE, SECOND_HAND_SIZE } from './calculationConstants';
 import { useCalculationTask } from './useCalculationTask';
 
 /** オブジェクトのキー順によらず計算入力を識別する。 */
-export function stableInputKey(input: EngineInput): string {
+export function stableInputKey(input: CalculationInput): string {
   return JSON.stringify(input, (_key, value: unknown) => {
     if (value === null || typeof value !== 'object' || Array.isArray(value)) return value;
     const entries = Object.entries(value).sort(([left], [right]) => left.localeCompare(right));
@@ -42,7 +42,8 @@ export function CalculationProvider({ children, createWorker }: {
     if (customHandSize !== null && !sizes.includes(customHandSize)) sizes.push(customHandSize);
     return sizes;
   }, [customHandSize]);
-  const compiled = useMemo(() => activeDeck ? compile(activeDeck, resolveCard, handSizes) : null,
+  const compiled = useMemo(() =>
+    activeDeck ? compileCalculation(activeDeck, resolveCard, handSizes) : null,
     [activeDeck, resolveCard, handSizes]);
   const input = compiled?.ok ? compiled.value : null;
   const inputKey = useMemo(() => input ? stableInputKey(input) : null, [input]);

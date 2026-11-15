@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { createEngineClient } from '../../engine/client';
 import type { EngineWorker } from '../../engine/client';
-import type { EngineInput, HandResult } from '../../engine/types';
+import type { CalculationInput, HandResult } from '../../engine/types';
 
 interface CalculationState {
   deckId: string | null;
@@ -19,7 +19,7 @@ interface CalculationSnapshot {
 const INITIAL_PROGRESS = { done: 0, total: 1 };
 
 /** Worker の実行・中止とデッキごとの実行状態・直近の結果を管理する。 */
-export function useCalculationTask(deckId: string | null, input: EngineInput | null,
+export function useCalculationTask(deckId: string | null, input: CalculationInput | null,
   inputKey: string | null, createWorker?: () => EngineWorker) {
   const [snapshot, setSnapshot] = useState<CalculationSnapshot | null>(null);
   const [state, setState] = useState<CalculationState>({

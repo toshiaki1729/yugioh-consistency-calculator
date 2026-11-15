@@ -6,7 +6,7 @@ import { CardDbProvider, useResolveCard } from '../src/carddb/useCardDb';
 import { createCardDb } from '../src/carddb/loader';
 import type { CardDbState } from '../src/carddb/loader';
 import type { CardData } from '../src/domain/types';
-import * as compiler from '../src/engine/compile';
+import * as compiler from '../src/engine/compileCalculation';
 import { createInitialState } from '../src/state/reducer';
 import { AppStateProvider, useDispatch } from '../src/state/store';
 import * as persist from '../src/state/persist';
@@ -64,7 +64,7 @@ describe('計算準備の例外からの復旧', () => {
   it('compileの例外を1つの案内で表示し、JSON書き出し・再読み込み・保存完了を維持する', () => {
     vi.useFakeTimers();
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.spyOn(compiler, 'compile').mockImplementation(() => { throw new Error('計算準備のテスト例外'); });
+    vi.spyOn(compiler, 'compileCalculation').mockImplementation(() => { throw new Error('計算準備のテスト例外'); });
     const download = vi.spyOn(persist, 'downloadDeck').mockImplementation(() => {});
     const reload = vi.spyOn(location, 'reload').mockImplementation(() => {});
     const storage = createStorage();
@@ -97,7 +97,7 @@ function CalculationProbe() {
 describe('計算入力のメモ化', () => {
   it('親描画・保存・進捗・結果では再compileせず、デッキ・手札・DBの変更では再compileする', async () => {
     vi.useFakeTimers();
-    const compile = vi.spyOn(compiler, 'compile');
+    const compile = vi.spyOn(compiler, 'compileCalculation');
     const worker = new FakeEngineWorker();
     worker.deferred = true;
     const storage = createStorage();

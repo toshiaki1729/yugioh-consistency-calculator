@@ -76,7 +76,7 @@ describe('初動パターンと計算結果', () => {
     }
     const list = within(screen.getByRole('list', { name: 'パターン一覧' }));
     expect(list.getByText(percent.format(expected[0].perPattern.p1.p))).toBeVisible();
-    expect(workers[0].request?.input.handSizes).toEqual([5, 6]);
+    expect(workers[0].request?.input.input.handSizes).toEqual([5, 6]);
     expect(panel.getByText(/計算時間 \d+\.\d{2} 秒/)).toBeVisible();
   });
 
@@ -194,11 +194,11 @@ describe('初動パターンと計算結果', () => {
     const { user, workers, calculate, panel, panelElement } = await setup(state);
     await user.selectOptions(panel.getByLabelText('追加の手札枚数'), '5');
     await calculate();
-    expect(workers[0].request?.input.handSizes).toEqual([5, 6]);
+    expect(workers[0].request?.input.input.handSizes).toEqual([5, 6]);
     await user.selectOptions(panel.getByLabelText('追加の手札枚数'), '1');
     expect(panel.getByText('古い結果（再計算してください）')).toBeVisible();
     await calculate();
-    expect(workers[0].request?.input.handSizes).toEqual([5, 6, 1]);
+    expect(workers[0].request?.input.input.handSizes).toEqual([5, 6, 1]);
     expect(panel.getByRole('row', { name: /任意 1 枚/ })).toBeVisible();
     await user.selectOptions(panel.getByLabelText('追加の手札枚数'), '10');
     expect(panel.getByText('手札枚数 10 はメインデッキの枚数（6 枚）を超えています')).toBeVisible();
@@ -246,8 +246,8 @@ describe('初動パターンと計算結果', () => {
     const input = compiled.value;
     const reordered = JSON.parse(JSON.stringify(input, (_key, value: unknown) => value !== null && typeof value === 'object' && !Array.isArray(value)
       ? Object.fromEntries(Object.entries(value).reverse()) : value)) as EngineInput;
-    expect(stableInputKey(reordered)).toBe(stableInputKey(input));
-    expect(stableInputKey({ ...input, handSizes: [6, 5] })).not.toBe(stableInputKey(input));
-    expect(stableInputKey({ ...input, otherCount: input.otherCount + 1 })).not.toBe(stableInputKey(input));
+    expect(stableInputKey({ mode: 'classes', input: reordered })).toBe(stableInputKey({ mode: 'classes', input }));
+    expect(stableInputKey({ mode: 'classes', input: { ...input, handSizes: [6, 5] } })).not.toBe(stableInputKey({ mode: 'classes', input }));
+    expect(stableInputKey({ mode: 'classes', input: { ...input, otherCount: input.otherCount + 1 } })).not.toBe(stableInputKey({ mode: 'classes', input }));
   });
 });

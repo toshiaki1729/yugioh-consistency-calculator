@@ -1,7 +1,28 @@
 import { countStates, runExact } from './exact';
 import { project } from './project';
 import { runSampling } from './sampling';
-import type { EngineInput, Estimate, HandResult, ProgressCallback } from './types';
+import { runSimulation } from './simulateRun';
+import type {
+  CalculationInput, EngineInput, Estimate, HandResult, ProgressCallback,
+} from './types';
+
+/** 選択済みの方式で計算し、全手札枚数の進捗と結果を返す。 */
+export function runCalculation(
+  calculation: CalculationInput, onProgress?: ProgressCallback,
+): HandResult[] {
+  if (calculation.mode === 'classes') return runEngine(calculation.input, onProgress);
+  const { input } = calculation;
+  const total = input.limits.samples * input.handSizes.length;
+  let done = 0;
+  onProgress?.(0, total);
+  return input.handSizes.map(handSize => {
+    const start = performance.now();
+    const reportProgress = (localDone: number) => onProgress?.(done + localDone, total);
+    const result = runSimulation(input, handSize, onProgress ? reportProgress : undefined);
+    done += input.limits.samples;
+    return { handSize, ...result, elapsedMs: performance.now() - start };
+  });
+}
 
 /** 全体とパターン別の計算方式を選び、結果をまとめる。 */
 export function runEngine(input: EngineInput, onProgress?: ProgressCallback): HandResult[] {

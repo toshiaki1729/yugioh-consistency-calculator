@@ -188,26 +188,57 @@ describe('デッキの残数条件', () => {
   });
 });
 
-describe('途中段階の保護と保護解除後の移動条件', () => {
+describe('シミュレーションへの案内とドロー効果なしの移動条件', () => {
   const unsupported: PatternCondition[] = [
     { kind: 'movedIncludes', target: card('A'), zones: ['graveyard'] },
     { kind: 'movedExcludes', target: card('A'), zones: ['banishedFaceUp'] },
     { kind: 'deckAfterBanish', target: card('A'), banish: 3, count: 1 },
   ];
-  const protectedError = { ok: false, error: 'ドロー効果と一部の条件はまだ計算できません' };
+  const protectedError = { ok: false, error: 'この計算には compileCalculation を使ってください' };
 
-  it.each(unsupported)('有効な条件だけのパターンも保護する: $kind', condition => {
+  it.each(unsupported.slice(0, 2))('ドロー効果なしの移動条件はcompileで計算できる: $kind', condition => {
     const deck = makeDeck({ A: 3, O: 9 }, [pattern('P', [], [condition])]);
-    expect(compile(deck, () => undefined, [5])).toEqual(protectedError);
+    const compiled = compile(deck, () => undefined, [5]);
+    if (!compiled.ok) throw new Error(compiled.error);
+    const result = runEngine(compiled.value)[0];
+    const probability = condition.kind === 'movedIncludes' ? 0 : 1;
+    expect(result.success).toMatchObject({ method: 'exact', p: probability });
+    expect(result.perPattern.P).toMatchObject({ method: 'exact', p: probability });
     deck.patterns[0].enabled = false;
     deck.patterns.push(pattern('valid', [slot(card('A'))], []));
     expect(compile(deck, () => undefined, [5]).ok).toBe(true);
   });
 
-  it('メインデッキのドロー効果を保護し、無効パターンの有無に依存しない', () => {
+  it('有効なdeckAfterBanishはシミュレーションへ案内し、無効なら従来方式を使う', async () => {
+    const { compileCalculation } = await import('../src/engine/compileCalculation');
+    const condition = unsupported[2];
+    const deck = makeDeck({ A: 3, O: 9 }, [pattern('P', [], [condition])]);
+    expect(compile(deck, () => undefined, [5])).toEqual(protectedError);
+    expect(compileCalculation(deck, () => undefined, [5])).toMatchObject({
+      ok: true, value: { mode: 'simulation' },
+    });
+    deck.patterns[0].enabled = false;
+    deck.patterns.push(pattern('valid', [slot(card('A'))], []));
+    expect(compile(deck, () => undefined, [5]).ok).toBe(true);
+    expect(compileCalculation(deck, () => undefined, [5])).toMatchObject({
+      ok: true, value: { mode: 'classes' },
+    });
+  });
+
+  it('メインデッキのドロー効果をシミュレーションへ案内し、無効パターンの有無に依存しない', async () => {
+    const { compileCalculation } = await import('../src/engine/compileCalculation');
     const deck = makeDeck({ A: 3, O: 9 }, [pattern('P', [slot(card('A'))], [])]);
     deck.effects = [{ ...createEffect(), cardId: 'A' }];
     expect(compile(deck, () => undefined, [5])).toEqual(protectedError);
+    expect(compileCalculation(deck, () => undefined, [5])).toMatchObject({
+      ok: true, value: { mode: 'simulation' },
+    });
+    deck.patterns[0].enabled = false;
+    deck.patterns.push(pattern('valid', [slot(card('A'))], []));
+    expect(compile(deck, () => undefined, [5])).toEqual(protectedError);
+    expect(compileCalculation(deck, () => undefined, [5])).toMatchObject({
+      ok: true, value: { mode: 'simulation' },
+    });
     deck.patterns = [];
     expect(compile(deck, () => undefined, [5])).toEqual(protectedError);
   });
@@ -219,7 +250,7 @@ describe('途中段階の保護と保護解除後の移動条件', () => {
     expect(compile(deck, () => undefined, [5]).ok).toBe(true);
   });
 
-  // 公開compileの保護は維持したまま、T27で利用する変換と結果の組み立てを検証する。
+  // クラスへの変換と結果の組み立てを直接検証する。
   function compileWithoutGuard(patterns: Pattern[], exactMaxStates = 0): EngineInput {
     const deck = makeDeck({ A: 3, B: 2, O: 7 }, patterns);
     const counts = new Map(deck.entries.map(entry => [entry.cardId, entry.count]));

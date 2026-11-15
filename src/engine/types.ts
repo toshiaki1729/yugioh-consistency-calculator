@@ -1,3 +1,10 @@
+import type { SimulationInput } from './simulateTypes';
+
+/** 計算方式に対応した、Worker に渡す入力。 */
+export type CalculationInput =
+  | { mode: 'classes'; input: EngineInput }
+  | { mode: 'simulation'; input: SimulationInput };
+
 /** 計算方式の切り替えとサンプリングの設定。 */
 export interface EngineLimits {
   exactMaxStates: number;

@@ -14,7 +14,7 @@ describe('Worker クライアント', () => {
     const create = vi.fn(() => worker);
     const client = createEngineClient(create);
     const progress = vi.fn();
-    const outcome = await client.run(input, progress).promise;
+    const outcome = await client.run({ mode: 'classes', input }, progress).promise;
     expect(outcome.status).toBe('done');
     if (outcome.status !== 'done') throw new Error('計算結果がありません');
     const expected = runEngine(input);
@@ -22,7 +22,7 @@ describe('Worker クライアント', () => {
       .toEqual(expected.map(({ elapsedMs: _, ...result }) => result));
     expect(progress.mock.calls[0][0]).toBe(0);
     expect(progress.mock.calls.at(-1)![0]).toBe(progress.mock.calls.at(-1)![1]);
-    await client.run(input).promise;
+    await client.run({ mode: 'classes', input }).promise;
     expect(create).toHaveBeenCalledTimes(1);
     client.dispose();
     expect(worker.terminate).toHaveBeenCalledTimes(1);
@@ -32,13 +32,13 @@ describe('Worker クライアント', () => {
     const workers: FakeEngineWorker[] = [];
     const client = createEngineClient(() => { const worker = new FakeEngineWorker(); worker.deferred = true; workers.push(worker); return worker; });
     const progress = vi.fn();
-    const task = client.run(input, progress);
+    const task = client.run({ mode: 'classes', input }, progress);
     task.cancel();
     await expect(task.promise).resolves.toEqual({ status: 'cancelled' });
     expect(workers[0].terminate).toHaveBeenCalledTimes(1);
     expect(workers).toHaveLength(2);
     task.cancel();
-    const next = client.run(input);
+    const next = client.run({ mode: 'classes', input });
     workers[0].complete();
     expect(progress).not.toHaveBeenCalled();
     workers[1].emit({ type: 'error', requestId: -1, message: '旧応答' });
@@ -50,8 +50,8 @@ describe('Worker クライアント', () => {
   it('新しい実行と dispose は未完了の promise を cancelled にする', async () => {
     const workers: FakeEngineWorker[] = [];
     const client = createEngineClient(() => { const worker = new FakeEngineWorker(); worker.deferred = true; workers.push(worker); return worker; });
-    const first = client.run(input);
-    const second = client.run(input);
+    const first = client.run({ mode: 'classes', input });
+    const second = client.run({ mode: 'classes', input });
     await expect(first.promise).resolves.toEqual({ status: 'cancelled' });
     first.cancel();
     expect(workers[1].terminate).not.toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('Worker クライアント', () => {
     await expect(second.promise).resolves.toEqual({ status: 'cancelled' });
     expect(workers).toHaveLength(2);
     expect(workers[1].terminate).toHaveBeenCalledTimes(1);
-    await expect(client.run(input).promise).resolves.toMatchObject({ status: 'error' });
+    await expect(client.run({ mode: 'classes', input }).promise).resolves.toMatchObject({ status: 'error' });
   });
 
   it.each(['message', 'runtime', 'decode', 'send', 'create'] as const)('%s エラーを reject せず返す', async kind => {
@@ -67,7 +67,7 @@ describe('Worker クライアント', () => {
     worker.deferred = true;
     const client = createEngineClient(() => { if (kind === 'create') throw new Error('起動拒否'); return worker; });
     if (kind === 'send') worker.postMessage = () => { throw new Error('送信拒否'); };
-    const task = client.run(input);
+    const task = client.run({ mode: 'classes', input });
     if (kind === 'message') worker.emit({ type: 'error', requestId: worker.request!.requestId, message: '計算に失敗しました' });
     if (kind === 'runtime') worker.onerror?.(new ErrorEvent('error', { message: '停止' }));
     if (kind === 'decode') worker.onmessageerror?.(new MessageEvent('messageerror'));

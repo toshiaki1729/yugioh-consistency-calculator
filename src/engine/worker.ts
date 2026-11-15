@@ -1,4 +1,4 @@
-import { runEngine } from './run';
+import { runCalculation } from './run';
 import type { RunMessage, WorkerMessage } from './client';
 
 const PROGRESS_INTERVAL_MS = 100;
@@ -13,7 +13,7 @@ self.onmessage = ({ data }) => {
   const { requestId, input } = data;
   let lastProgress = -Infinity;
   try {
-    const results = runEngine(input, (done, total) => {
+    const results = runCalculation(input, (done, total) => {
       const now = performance.now();
       if (now - lastProgress < PROGRESS_INTERVAL_MS && done !== total) return;
       lastProgress = now;
