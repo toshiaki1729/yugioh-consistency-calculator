@@ -30,6 +30,7 @@ export function Tabs({ items, activeId, onSelect }: TabsProps) {
     event.preventDefault();
     setActiveIndex(nextIndex);
     tabRefs.current[nextIndex]?.focus();
+    tabRefs.current[nextIndex]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
   function renderTab(item: TabsProps['items'][number], index: number) {
     return <TabButton key={item.id} item={item} id={id} isActive={activeIndex === index}

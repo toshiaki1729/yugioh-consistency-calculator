@@ -23,19 +23,24 @@ const slotCounts = Array.from({ length: MAX_SLOT_COUNT - MIN_SLOT_COUNT + 1 },
   (_, index) => index + MIN_SLOT_COUNT);
 
 /** スロットと追加の条件に共通の対象を選ぶ。 */
-export function SlotSourceSelect({ source, sources, onChange }: {
-  source: SlotSource; sources: SlotOption[]; onChange: (source: SlotSource) => void;
+export function SlotSourceSelect({ source, sources, onChange, onAny,
+  missingLabel = 'メインデッキにないカード' }: {
+  source: SlotSource | null; sources: SlotOption[]; onChange: (source: SlotSource) => void;
+  onAny?: () => void; missingLabel?: string;
 }) {
-  const value = source.type === 'group' ? `group:${source.groupId}` : `card:${source.cardId}`;
-  const hasSource = sources.some(item => item.value === value);
+  let value = '';
+  if (source) value = source.type === 'group' ? `group:${source.groupId}` : `card:${source.cardId}`;
+  const hasSource = sources.some(item => item.value === value) || (source === null && !!onAny);
   const groupOptions = sources.filter(item => item.source.type === 'group');
   const cardOptions = sources.filter(item => item.source.type === 'card');
   function handleChange(event: ChangeEvent<HTMLSelectElement>) {
+    if (event.target.value === '') { onAny?.(); return; }
     const selected = sources.find(item => item.value === event.target.value)!;
     onChange(selected.source);
   }
   return <Select label="対象" value={value} onChange={handleChange}>
-    {!hasSource && <option value={value} disabled>メインデッキにないカード</option>}
+    {onAny && <option value="">何でも</option>}
+    {!hasSource && <option value={value} disabled>{missingLabel}</option>}
     <optgroup label="グループ">{groupOptions.map(item =>
       <option key={item.value} value={item.value}>グループ: {item.name}</option>)}</optgroup>
     <optgroup label="カード">{cardOptions.map(item =>

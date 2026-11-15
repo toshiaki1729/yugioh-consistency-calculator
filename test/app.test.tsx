@@ -14,7 +14,7 @@ describe('アプリの骨格', () => {
     render(<App db={db} storage={storage} />);
 
     expect(screen.getByRole('heading', { name: '初動率計算機', level: 1 })).toBeVisible();
-    expect(screen.getAllByRole('tab')).toHaveLength(3);
+    expect(screen.getAllByRole('tab')).toHaveLength(4);
     expect(screen.getByRole('tab', { name: 'デッキ' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tabpanel', { name: 'デッキ' })).toBeVisible();
     expect(screen.getByRole('complementary', { name: '計算結果' })).toBeVisible();
@@ -40,10 +40,10 @@ describe('アプリの骨格', () => {
     expect(screen.getByRole('tab', { name: 'デッキ' })).toHaveFocus();
 
     const moves = [
-      ['{ArrowLeft}', '初動パターン'],
+      ['{ArrowLeft}', 'ドロー効果'],
       ['{ArrowRight}', 'デッキ'],
       ['{ArrowRight}', 'カードグループ'],
-      ['{End}', '初動パターン'],
+      ['{End}', 'ドロー効果'],
       ['{Home}', 'デッキ'],
     ];
     for (const [key, name] of moves) {

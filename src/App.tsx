@@ -11,6 +11,7 @@ import { DeckHeader, NewDeckButton } from './ui/layout/DeckHeader';
 import { DeckView } from './ui/deck/DeckView';
 import { GroupsView } from './ui/groups/GroupsView';
 import { PatternsView } from './ui/patterns/PatternsView';
+import { EffectsView } from './ui/effects/EffectsView';
 import { CalculationProvider } from './ui/patterns/CalculationProvider';
 import type { EngineWorker } from './engine/client';
 import { EmptyState } from './ui/common/EmptyState';
@@ -78,6 +79,9 @@ function AppEditor({ activeDeck, activeTab, onSelect, onImport }: {
       : <EmptyState>デッキがありません。新規デッキを作成してください。</EmptyState> },
     { id: 'patterns', label: '初動パターン', content: activeDeck
       ? <PatternsView key={activeDeck.id} deck={activeDeck} />
+      : <EmptyState>デッキがありません。新規デッキを作成してください。</EmptyState> },
+    { id: 'effects', label: 'ドロー効果', content: activeDeck
+      ? <EffectsView key={activeDeck.id} deck={activeDeck} />
       : <EmptyState>デッキがありません。新規デッキを作成してください。</EmptyState> },
   ];
   return <Tabs activeId={activeTab} onSelect={onSelect} items={items} />;

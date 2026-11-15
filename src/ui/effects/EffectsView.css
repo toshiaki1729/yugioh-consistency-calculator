@@ -1,0 +1,50 @@
+.EffectsView, .EffectsView-editor, .EffectsView-steps, .EffectsView-step,
+.EffectsView-number {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.EffectsView > .Button, .EffectsView-steps > .Button { justify-self: start; }
+.EffectsView-list {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.EffectsView-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-width: 0;
+}
+.EffectsView-choice {
+  display: grid;
+  flex: 1 1 200px;
+  min-width: 0;
+  height: auto;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.EffectsView-choice[aria-pressed='true'] { background: var(--accent-weak); }
+.EffectsView-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.EffectsView-note { color: var(--text-muted); font-size: var(--font-size-small); }
+.EffectsView-warning { color: var(--warn); }
+.EffectsView-step {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.EffectsView .Select, .EffectsView .Select select { min-width: 0; max-width: 100%; }
