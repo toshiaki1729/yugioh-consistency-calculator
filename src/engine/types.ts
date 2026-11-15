@@ -47,7 +47,7 @@ export interface EngineInput {
 /** 確率と計算方式、および推定精度の情報。 */
 export interface Estimate {
   p: number;
-  method: 'exact' | 'sampling';
+  method: 'exact' | 'sampling' | 'simulation';
   lo?: number;
   hi?: number;
   states?: number;
