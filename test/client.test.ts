@@ -69,7 +69,10 @@ describe('Worker クライアント', () => {
     if (kind === 'send') worker.postMessage = () => { throw new Error('送信拒否'); };
     const task = client.run({ mode: 'classes', input });
     if (kind === 'message') worker.emit({ type: 'error', requestId: worker.request!.requestId, message: '計算に失敗しました' });
-    if (kind === 'runtime') worker.onerror?.(new ErrorEvent('error', { message: '停止' }));
+    // ErrorEvent は Node 22 のグローバルに無いため、client が使う項目だけを持つ値で代用する。
+    if (kind === 'runtime') {
+      worker.onerror?.({ message: '停止', preventDefault: () => {} } as unknown as ErrorEvent);
+    }
     if (kind === 'decode') worker.onmessageerror?.(new MessageEvent('messageerror'));
     await expect(task.promise).resolves.toMatchObject({ status: 'error', message: expect.any(String) });
     client.dispose();
