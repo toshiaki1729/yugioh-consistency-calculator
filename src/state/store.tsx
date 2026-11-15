@@ -5,7 +5,7 @@ import type { Dispatch, ReactNode } from 'react';
 import type { AppState, Deck } from '../domain/types';
 import { createReducer } from './reducer';
 import type { Action, StateDependencies } from './reducer';
-import { createSaver, loadState } from './persist';
+import { createSaver, loadState, STORAGE_KEY } from './persist';
 import type { SaveStatus, StateStorage } from './persist';
 
 const AppContext = createContext<{ app: AppState; activeDeck: Deck | null } | null>(null);
@@ -33,8 +33,9 @@ export function AppStateProvider({ children, storage, newId, now }: AppStateProv
       getItem: (key: string) => window.localStorage.getItem(key),
       setItem: (key: string, value: string) => window.localStorage.setItem(key, value),
     };
-    const loaded = loadState(backend, { newId, now });
-    const saver = createSaver(backend, { saveBlocked: loaded.saveBlocked });
+    let storedText: string | null = null;
+    const loaded = loadState(backend, { newId, now }, text => { storedText = text; });
+    const saver = createSaver(backend, { saveBlocked: loaded.saveBlocked, storedText });
     return { ...loaded, reducer: createReducer({ newId, now }), saver };
   });
   const [state, dispatch] = useReducer(session.reducer, { app: session.state, lastError: null });
@@ -42,6 +43,13 @@ export function AppStateProvider({ children, storage, newId, now }: AppStateProv
   const saveError = useSyncExternalStore(session.saver.subscribe, session.saver.getError);
 
   useEffect(() => { session.saver.schedule(state.app); }, [session, state.app]);
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY || event.key === null) session.saver.markConflict();
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [session]);
   useEffect(() => {
     const flush = () => session.saver.flush();
     const handleVisibilityChange = () => {

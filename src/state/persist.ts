@@ -15,7 +15,7 @@ export { MAX_FILE_BYTES } from '../domain/limits';
 /** 自動保存と復元に必要なストレージ操作。 */
 export type StateStorage = Pick<Storage, 'getItem' | 'setItem'>;
 /** 自動保存の進行状態。 */
-export type SaveStatus = 'saved' | 'pending' | 'failed';
+export type SaveStatus = 'saved' | 'pending' | 'failed' | 'conflict';
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -24,6 +24,7 @@ function getErrorMessage(error: unknown): string {
 /** 保存状態を復元し、壊れたデータは退避する。 */
 export function loadState(
   storage: StateStorage, dependencies: StateDependencies = {},
+  onRead?: (storedText: string | null) => void,
 ): { state: AppState; notice: string | null; saveBlocked: boolean } {
   let original: string | null;
   try {
@@ -34,6 +35,7 @@ export function loadState(
       notice: `保存データを読み取れませんでした。自動保存を停止しています。JSON で書き出してください。${getErrorMessage(error)}`,
     };
   }
+  onRead?.(original);
   if (original === null) return {
     state: createInitialState(dependencies), notice: null, saveBlocked: false,
   };
@@ -71,8 +73,8 @@ export function loadState(
 /** 変更の保存予約と状態通知を管理する。 */
 export function createSaver(
   storage: StateStorage,
-  { delayMs = SAVE_DELAY_MS, saveBlocked: isSaveBlocked = false }: {
-    delayMs?: number; saveBlocked?: boolean;
+  { delayMs = SAVE_DELAY_MS, saveBlocked: isSaveBlocked = false, storedText }: {
+    delayMs?: number; saveBlocked?: boolean; storedText?: string | null;
   } = {},
 ) {
   let status: SaveStatus = isSaveBlocked ? 'failed' : 'saved';
@@ -82,12 +84,38 @@ export function createSaver(
   const listeners = new Set<() => void>();
   const notify = () => listeners.forEach(listener => listener());
 
+  if (!isSaveBlocked && storedText === undefined) {
+    try {
+      storedText = storage.getItem(STORAGE_KEY);
+    } catch (cause) {
+      isSaveBlocked = true;
+      status = 'failed';
+      error = `保存データを読み取れませんでした。JSON で書き出してください。${getErrorMessage(cause)}`;
+    }
+  }
+
+  function markConflict(): void {
+    if (isSaveBlocked || status === 'conflict') return;
+    clearTimeout(timer);
+    timer = undefined;
+    pending = undefined;
+    status = 'conflict';
+    error = null;
+    notify();
+  }
+
   function flush(): void {
     clearTimeout(timer);
     timer = undefined;
-    if (isSaveBlocked || !pending) return;
+    if (isSaveBlocked || status === 'conflict' || !pending) return;
     try {
-      storage.setItem(STORAGE_KEY, JSON.stringify(pending));
+      const text = JSON.stringify(pending);
+      if (storage.getItem(STORAGE_KEY) !== storedText) {
+        markConflict();
+        return;
+      }
+      storage.setItem(STORAGE_KEY, text);
+      storedText = text;
       pending = undefined;
       status = 'saved';
       error = null;
@@ -100,7 +128,7 @@ export function createSaver(
 
   return {
     schedule(state: AppState): void {
-      if (isSaveBlocked) return;
+      if (isSaveBlocked || status === 'conflict') return;
       clearTimeout(timer);
       pending = state;
       status = 'pending';
@@ -109,6 +137,7 @@ export function createSaver(
       notify();
     },
     flush,
+    markConflict,
     getStatus: (): SaveStatus => status,
     getError: (): string | null => error,
     subscribe(listener: () => void): () => void {

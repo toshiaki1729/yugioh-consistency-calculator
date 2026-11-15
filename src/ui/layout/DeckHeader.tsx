@@ -121,11 +121,17 @@ function DeckNotices() {
   const [dismissedNotice, setDismissedNotice] = useState<string | null>(null);
   const statusLabels = {
     saved: '保存済み', pending: '保存待ち', failed: '保存に失敗しました（JSON で書き出してください）',
+    conflict: '別のタブで更新されました',
   };
+  const hasSaveProblem = status === 'failed' || status === 'conflict';
   return <>
-    <p role="status" className={status === 'failed' ? 'DeckHeader-error' : 'DeckHeader-status'}>
+    <p role="status" className={hasSaveProblem ? 'DeckHeader-error' : 'DeckHeader-status'}>
       {statusLabels[status]}
     </p>
+    {status === 'conflict' && <div role="alert" className="DeckHeader-message DeckHeader-error">
+      <p>別のタブでデータが更新されたため、このタブの自動保存を止めました。再読み込みすると最新のデータを表示します。このタブの変更を残す場合は、先に JSON で書き出してください。</p>
+      <Button onClick={() => location.reload()}>再読み込み</Button>
+    </div>}
     {saveError && <p className="DeckHeader-error">{saveError}</p>}
     {lastError && <div role="alert" className="DeckHeader-message DeckHeader-error">
       <p>{lastError}</p><Button onClick={() => dispatch({ type: 'error/clear' })}>エラーを閉じる</Button>

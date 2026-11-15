@@ -14,9 +14,11 @@ const file = convertCards(sample, '2026-11-15T00:00:00.000Z').db;
 const db = createCardDb(file);
 
 function setup({ state, loader }: { state?: AppState; loader?: ReturnType<typeof createCardDbLoader> } = {}) {
+  const storedValues = new Map<string, string>();
+  if (state) storedValues.set(STORAGE_KEY, JSON.stringify(state));
   const storage = {
-    getItem: (key: string) => key === STORAGE_KEY && state ? JSON.stringify(state) : null,
-    setItem: vi.fn(),
+    getItem: (key: string) => storedValues.get(key) ?? null,
+    setItem: vi.fn((key: string, value: string) => { storedValues.set(key, value); }),
   };
   render(<StrictMode><App storage={storage} db={loader ? undefined : db} loader={loader} /></StrictMode>);
   return { user: userEvent.setup(), storage };
