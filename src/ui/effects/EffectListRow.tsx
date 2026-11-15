@@ -2,6 +2,7 @@ import { useResolveCard } from '../../carddb/useCardDb';
 import type { Deck, DrawEffect } from '../../domain/types';
 import { useDispatch } from '../../state/store';
 import { Button } from '../common/Button';
+import { IconButton } from '../common/IconButton';
 import { drawLockLabels, summarizeStep } from './effectForm';
 
 /** カード名・制約・手順の要約と優先順の操作を表示する。 */
@@ -30,10 +31,10 @@ export function EffectListRow({ deck, effect, index, isSelected, onSelect, onMov
       {!isInMain && <span className="EffectsView-warning">デッキにないため使われません</span>}
     </Button>
     <div className="EffectsView-actions">
-      <Button aria-label={`${name}を上へ`} disabled={index === 0}
-        onClick={() => onMove(index, -1)}>↑</Button>
-      <Button aria-label={`${name}を下へ`} disabled={index === deck.effects.length - 1}
-        onClick={() => onMove(index, 1)}>↓</Button>
+      <IconButton aria-label={`${name}を上へ`} disabled={index === 0}
+        onClick={() => onMove(index, -1)}>↑</IconButton>
+      <IconButton aria-label={`${name}を下へ`} disabled={index === deck.effects.length - 1}
+        onClick={() => onMove(index, 1)}>↓</IconButton>
       <Button variant="danger" onClick={handleDelete}>削除</Button>
     </div>
   </li>;
