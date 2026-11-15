@@ -10,6 +10,8 @@ import {
   createPattern, duplicatePattern, editPattern, deletePattern, togglePattern, reorderPatterns,
 } from './patternActions';
 import { addSlot, editSlot, deleteSlot } from './slotActions';
+import { addCondition, editCondition, deleteCondition } from './conditionActions';
+import { addEffect, editEffect, deleteEffect, reorderEffects } from './effectActions';
 
 /** デッキを新規作成し、編集対象にする。 */
 export function createDeck(context: EditContext, action: ActionOf<'deck/create'>): void {
@@ -98,5 +100,12 @@ export function editActiveDeck(context: EditContext, action: Action): string | v
     case 'slot/add': return addSlot(deck, action, newId);
     case 'slot/edit': return editSlot(deck, action);
     case 'slot/delete': return deleteSlot(deck, action);
+    case 'condition/add': return addCondition(deck, action);
+    case 'condition/edit': return editCondition(deck, action);
+    case 'condition/delete': return deleteCondition(deck, action);
+    case 'effect/add': return addEffect(deck, action, newId);
+    case 'effect/edit': return editEffect(deck, action);
+    case 'effect/delete': return deleteEffect(deck, action);
+    case 'effect/reorder': return reorderEffects(deck, action);
   }
 }

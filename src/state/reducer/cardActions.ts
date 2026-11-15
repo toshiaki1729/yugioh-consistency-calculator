@@ -1,5 +1,6 @@
 import type { Deck, FilterNode } from '../../domain/types';
 import type { ActionOf } from './types';
+import { hasEffectTarget, isSameTarget } from './targetReferences';
 
 /** カスタムカードを採番して登録し、指定時はデッキにも同時追加する。 */
 export function addCustomCard(
@@ -36,6 +37,7 @@ export function deleteCustomCard(
   deck: Deck, action: ActionOf<'customCard/delete'>,
 ): string | undefined {
   const cardId = action.cardId;
+  const target = { type: 'card', cardId } as const;
   if (!deck.customCards.some(card => card.id === cardId)) {
     return '対象のカスタムカードがありません。';
   }
@@ -47,9 +49,12 @@ export function deleteCustomCard(
     removeFilterCard(group.filter, cardId);
   }
   for (const pattern of deck.patterns) {
-    pattern.slots = pattern.slots.filter(slot =>
-      slot.source.type !== 'card' || slot.source.cardId !== cardId);
+    pattern.slots = pattern.slots.filter(slot => !isSameTarget(slot.source, target));
+    pattern.conditions = pattern.conditions.filter(condition =>
+      !isSameTarget(condition.target, target));
   }
+  deck.effects = deck.effects.filter(effect =>
+    effect.cardId !== cardId && !hasEffectTarget(effect, target));
 }
 
 /** 公式ページから得た補助データを更新する。 */

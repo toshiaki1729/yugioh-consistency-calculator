@@ -1,5 +1,6 @@
 import type {
-  AppState, CardData, CardGroup, CardId, Deck, DeckEntry, Pattern, Section, Slot,
+  AppState, CardData, CardGroup, CardId, Deck, DeckEntry, DrawEffect, Pattern, PatternCondition,
+  Section, Slot,
 } from '../../domain/types';
 
 /** 状態更新に使う ID 発行と時計の差し替え先。 */
@@ -48,6 +49,13 @@ export type Action =
   | { type: 'slot/add'; patternId: string; slot: Omit<Slot, 'id'> }
   | { type: 'slot/edit'; patternId: string; slotId: string; changes: Partial<Omit<Slot, 'id'>> }
   | { type: 'slot/delete'; patternId: string; slotId: string }
+  | { type: 'condition/add'; patternId: string; condition: PatternCondition }
+  | { type: 'condition/edit'; patternId: string; index: number; condition: PatternCondition }
+  | { type: 'condition/delete'; patternId: string; index: number }
+  | { type: 'effect/add'; effect: Omit<DrawEffect, 'id'> }
+  | { type: 'effect/edit'; effectId: string; changes: Partial<Omit<DrawEffect, 'id'>> }
+  | { type: 'effect/delete'; effectId: string }
+  | { type: 'effect/reorder'; effectIds: string[] }
   | { type: 'settings/setCustomHandSize'; handSize: number | null };
 
 /** アクションの種類に対応する入力。 */

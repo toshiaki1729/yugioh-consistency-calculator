@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { CardGroup, Deck } from '../../domain/types';
 import { MAX_GROUPS } from '../../domain/limits';
+import { useResolveCard } from '../../carddb/useCardDb';
+import { hasEffectTarget, isSameTarget } from '../../state/reducer/targetReferences';
 import { useDispatch } from '../../state/store';
 import { Button } from '../common/Button';
 import { Dialog } from '../common/Dialog';
@@ -24,13 +26,30 @@ function GroupListRow({ group, kinds, count, isSelected, onSelect }: {
 function DeleteGroupDialog({ group, deck, onClose, onDelete }: {
   group: CardGroup; deck: Deck; onClose: () => void; onDelete: () => void;
 }) {
-  const references = deck.patterns.filter(pattern => pattern.slots.some(slot =>
-    slot.source.type === 'group' && slot.source.groupId === group.id));
+  const resolveCard = useResolveCard();
+  const target = { type: 'group', groupId: group.id } as const;
+  const conditionReferences = deck.patterns.filter(pattern =>
+    pattern.conditions.some(condition => isSameTarget(condition.target, target)));
+  const references = deck.patterns.filter(pattern => conditionReferences.includes(pattern)
+    || pattern.slots.some(slot => isSameTarget(slot.source, target)));
+  const effects = deck.effects.filter(effect => hasEffectTarget(effect, target));
+  const effectNames = effects.map(effect => ({
+    id: effect.id,
+    name: resolveCard(effect.cardId)?.name ?? deck.entries.find(entry =>
+      entry.section === 'main' && entry.cardId === effect.cardId)?.name ?? effect.cardId,
+  }));
+  const referenceNotice = conditionReferences.length > 0
+    ? 'これらのパターンから該当するスロットや追加の条件も削除されます。'
+    : 'これらのパターンから該当するスロットも削除されます。';
   return <Dialog open title="グループを削除" onClose={onClose}>
     <p>「{group.name}」を削除しますか？</p>
     {references.length > 0 && <>
       <ul>{references.map(pattern => <li key={pattern.id}>{pattern.name}</li>)}</ul>
-      <p>これらのパターンから該当するスロットも削除されます。</p>
+      <p>{referenceNotice}</p>
+    </>}
+    {effectNames.length > 0 && <>
+      <ul>{effectNames.map(effect => <li key={effect.id}>{effect.name}</li>)}</ul>
+      <p>これらのドロー効果も削除されます。</p>
     </>}
     <div className="GroupsView-actions">
       <Button onClick={onClose}>キャンセル</Button>

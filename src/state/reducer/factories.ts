@@ -1,4 +1,4 @@
-import type { AppState, Deck } from '../../domain/types';
+import type { AppState, CardTarget, Deck } from '../../domain/types';
 import { APP_SCHEMA_VERSION, MAX_TITLE_LENGTH } from '../../domain/limits';
 import type { StateDependencies } from './types';
 
@@ -39,22 +39,26 @@ export function copyDeckWithNewIds(deck: Deck, newId: () => string): Deck {
     groupIds.set(group.id, id);
     group.id = id;
   }
+  function remapTarget(target: CardTarget): CardTarget {
+    // 共有されている対象に ID の振り直しが二重にかからないよう置き換える。
+    return target.type === 'group'
+      ? { ...target, groupId: groupIds.get(target.groupId)! } : { ...target };
+  }
   for (const pattern of copy.patterns) {
     pattern.id = newId();
     for (const slot of pattern.slots) {
       slot.id = newId();
-      if (slot.source.type === 'group') slot.source.groupId = groupIds.get(slot.source.groupId)!;
+      slot.source = remapTarget(slot.source);
     }
     for (const condition of pattern.conditions) {
-      const target = condition.target;
-      if (target.type === 'group') target.groupId = groupIds.get(target.groupId)!;
+      condition.target = remapTarget(condition.target);
     }
   }
   for (const effect of copy.effects) {
     effect.id = newId();
     for (const step of effect.steps) {
-      if (!('target' in step) || step.target?.type !== 'group') continue;
-      step.target.groupId = groupIds.get(step.target.groupId)!;
+      if (!('target' in step) || step.target === null) continue;
+      step.target = remapTarget(step.target);
     }
   }
   return copy;
