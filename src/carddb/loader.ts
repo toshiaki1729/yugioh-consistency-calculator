@@ -4,6 +4,7 @@ import type { CardDbFile } from './convert';
 import { searchCards } from './search';
 import type { CardSearchEntry } from './search';
 
+/** カードのID検索・名前検索を提供する索引。 */
 export interface CardDb {
   generatedAt: string;
   size: number;
@@ -12,11 +13,13 @@ export interface CardDb {
   search(query: string, limit?: number): CardData[];
 }
 
+/** カードDBの読み込み状態。 */
 export type CardDbState =
   | { status: 'loading' }
   | { status: 'ready'; db: CardDb }
   | { status: 'error'; error: string };
 
+/** 変換済みカードDBから検索用の索引を作る。 */
 export function createCardDb(file: CardDbFile): CardDb {
   const byId = new Map<CardId, CardData>();
   const byName = new Map<string, CardData[]>();
@@ -38,6 +41,7 @@ export function createCardDb(file: CardDbFile): CardDb {
   };
 }
 
+/** カードDBの非同期取得と状態通知・再試行を提供する。 */
 export function createCardDbLoader(
   fetchImpl: typeof fetch = fetch,
   url = import.meta.env.BASE_URL + 'data/cards.ja.json',
@@ -57,23 +61,7 @@ export function createCardDbLoader(
         next = { status: 'error', error: `カードDBを読み込めませんでした（HTTP ${response.status}）` };
       } else {
         const file: unknown = await response.json();
-        if (!file || typeof file !== 'object' || !('version' in file) || file.version !== 1
-          || !('cards' in file) || !Array.isArray(file.cards)
-          || !('generatedAt' in file) || typeof file.generatedAt !== 'string') {
-          next = { status: 'error', error: 'カードDBの形式が不正です（version・cards・generatedAt）' };
-        } else {
-          const invalid = file.cards.findIndex((card: unknown) =>
-            !card || typeof card !== 'object'
-            || !('id' in card) || typeof card.id !== 'string'
-            || !('name' in card) || typeof card.name !== 'string'
-            || !('kind' in card) || !['monster', 'spell', 'trap'].includes(card.kind as string)
-            || ('kana' in card && card.kana !== undefined && typeof card.kana !== 'string'));
-          next = invalid >= 0
-            ? { status: 'error', error: `カードDBの ${invalid + 1} 件目のカードが不正です` }
-            : { status: 'ready', db: createCardDb({
-              version: 1, source: 'yaml-yugi', generatedAt: file.generatedAt, cards: file.cards as CardData[],
-            }) };
-        }
+        next = readCardDbFile(file);
       }
     } catch {
       next = { status: 'error', error: 'カードDBの通信またはJSONの読み込みに失敗しました。再試行してください' };
@@ -90,4 +78,25 @@ export function createCardDbLoader(
     load,
     retry: load,
   };
+}
+
+function readCardDbFile(file: unknown): CardDbState {
+  if (!file || typeof file !== 'object' || !('version' in file) || file.version !== 1
+    || !('cards' in file) || !Array.isArray(file.cards)
+    || !('generatedAt' in file) || typeof file.generatedAt !== 'string') {
+    return { status: 'error', error: 'カードDBの形式が不正です（version・cards・generatedAt）' };
+  }
+  const invalidIndex = file.cards.findIndex((card: unknown) =>
+    !card || typeof card !== 'object'
+    || !('id' in card) || typeof card.id !== 'string'
+    || !('name' in card) || typeof card.name !== 'string'
+    || !('kind' in card) || !['monster', 'spell', 'trap'].includes(card.kind as string)
+    || ('kana' in card && card.kana !== undefined && typeof card.kana !== 'string'));
+  if (invalidIndex >= 0) {
+    return { status: 'error', error: `カードDBの ${invalidIndex + 1} 件目のカードが不正です` };
+  }
+  return { status: 'ready', db: createCardDb({
+    version: 1, source: 'yaml-yugi', generatedAt: file.generatedAt,
+    cards: file.cards as CardData[],
+  }) };
 }

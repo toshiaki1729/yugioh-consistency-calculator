@@ -1,6 +1,8 @@
 import { runEngine } from './run';
 import type { RunMessage, WorkerMessage } from './client';
 
+const PROGRESS_INTERVAL_MS = 100;
+
 declare const self: {
   onmessage: ((event: MessageEvent<RunMessage>) => void) | null;
   postMessage(message: WorkerMessage): void;
@@ -13,7 +15,7 @@ self.onmessage = ({ data }) => {
   try {
     const results = runEngine(input, (done, total) => {
       const now = performance.now();
-      if (now - lastProgress < 100 && done !== total) return;
+      if (now - lastProgress < PROGRESS_INTERVAL_MS && done !== total) return;
       lastProgress = now;
       self.postMessage({ type: 'progress', requestId, done, total });
     });

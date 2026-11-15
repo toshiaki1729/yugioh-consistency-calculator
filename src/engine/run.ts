@@ -3,23 +3,26 @@ import { project } from './project';
 import { runSampling } from './sampling';
 import type { EngineInput, Estimate, HandResult, ProgressCallback } from './types';
 
+/** 全体とパターン別の計算方式を選び、結果をまとめる。 */
 export function runEngine(input: EngineInput, onProgress?: ProgressCallback): HandResult[] {
   const preparationStart = performance.now();
   const projections = input.patterns.map(pattern => project(input, pattern));
   const jobs = input.handSizes.map(handSize => [input, ...projections].map(source => {
     const states = countStates(source, handSize);
-    const exact = states <= source.limits.exactMaxStates;
-    return { source, states, exact, work: exact ? states : source.limits.samples };
+    const isExact = states <= source.limits.exactMaxStates;
+    return { source, states, isExact, work: isExact ? states : source.limits.samples };
   }));
   const preparationMs = performance.now() - preparationStart;
-  const total = jobs.reduce((sum, handJobs) => sum + handJobs.reduce((subtotal, job) => subtotal + job.work, 0), 0);
+  const handWork = jobs.map(handJobs => handJobs.reduce((sum, job) => sum + job.work, 0));
+  const total = handWork.reduce((sum, work) => sum + work, 0);
   let done = 0;
   onProgress?.(0, total);
   return input.handSizes.map((handSize, i) => {
     const start = performance.now();
     const estimates = jobs[i].map(job => {
-      const progress = onProgress ? (localDone: number) => onProgress(done + localDone, total) : undefined;
-      const estimate = job.exact
+      const reportProgress = (localDone: number) => onProgress?.(done + localDone, total);
+      const progress = onProgress ? reportProgress : undefined;
+      const estimate = job.isExact
         ? runExact(job.source, handSize, progress, job.states).estimate
         : runSampling(job.source, handSize, progress);
       done += job.work;

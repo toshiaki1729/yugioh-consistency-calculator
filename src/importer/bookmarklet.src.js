@@ -10,7 +10,9 @@
     var link = root.querySelector('input.link_value');
     var match = link && link.value.match(/[?&]cid=(\d+)(?:&|$)/);
     var input = root.querySelector('input.cid');
-    var value = match ? Number(match[1]) : input ? Number(input.value) : 0;
+    var value = 0;
+    if (match) value = Number(match[1]);
+    else if (input) value = Number(input.value);
     return Number.isSafeInteger(value) && value > 0 ? value : undefined;
   }
 
@@ -62,14 +64,15 @@
     var bytes = new TextEncoder().encode(JSON.stringify(payload));
     var binary = '';
     bytes.forEach(function (byte) { binary += String.fromCharCode(byte); });
-    return appUrl + '#import=' + btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    var encoded = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return appUrl + '#import=' + encoded;
   }
 
-  function copied() {
+  function notifyCopied() {
     window.alert('コピーしました。アプリの取り込み欄に貼り付けてください');
   }
 
-  function legacyCopy(json) {
+  function copyWithTextarea(json) {
     var old = document.getElementById('shodou-calc-import-copy');
     if (old) old.remove();
     var frame = document.createElement('div');
@@ -92,15 +95,15 @@
     document.body.appendChild(frame);
     textarea.focus();
     textarea.select();
-    var success = false;
+    var isCopied = false;
     try {
-      success = Boolean(document.execCommand && document.execCommand('copy'));
+      isCopied = Boolean(document.execCommand && document.execCommand('copy'));
     } catch {
       /* コピーAPIが禁止されていても手動コピー欄を残す。 */
     }
-    if (success) {
+    if (isCopied) {
       frame.remove();
-      copied();
+      notifyCopied();
     }
   }
 
@@ -108,13 +111,15 @@
     var json = JSON.stringify(payload);
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(json).then(copied, function () { legacyCopy(json); });
+        navigator.clipboard.writeText(json).then(notifyCopied, function () {
+          copyWithTextarea(json);
+        });
         return;
       }
     } catch {
       /* Clipboard APIへのアクセス自体が拒否される環境では旧APIを試す。 */
     }
-    legacyCopy(json);
+    copyWithTextarea(json);
   }
 
   var url = makeUrl();

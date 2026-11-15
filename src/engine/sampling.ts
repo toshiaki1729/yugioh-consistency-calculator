@@ -1,14 +1,21 @@
 import { createHandMatcher } from './flow';
+import { PROGRESS_STATE_MASK } from './constants';
 import type { EngineInput, Estimate, ProgressCallback } from './types';
 
-export function runSampling(input: EngineInput, handSize: number, onProgress?: ProgressCallback): Estimate {
+const WILSON_Z_95 = 1.959963984540054;
+const UINT32_RANGE = 4294967296;
+
+/** 再現可能な手札抽出で確率と95%信頼区間を推定する。 */
+export function runSampling(
+  input: EngineInput, handSize: number, onProgress?: ProgressCallback,
+): Estimate {
   const { samples, seed } = input.limits;
   let state = seed >>> 0;
-  const random = () => {
+  const generateRandom = () => {
     state = (state + 0x6d2b79f5) >>> 0;
     let value = Math.imul(state ^ (state >>> 15), state | 1);
     value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    return ((value ^ (value >>> 14)) >>> 0) / UINT32_RANGE;
   };
   const deck = new Uint8Array(input.deckSize);
   const otherIndex = input.classes.length;
@@ -25,7 +32,7 @@ export function runSampling(input: EngineInput, handSize: number, onProgress?: P
   for (let sample = 1; sample <= samples; sample++) {
     hand.fill(0);
     for (let i = 0; i < handSize; i++) {
-      const j = i + Math.floor(random() * (deck.length - i));
+      const j = i + Math.floor(generateRandom() * (deck.length - i));
       swaps[i] = j;
       const value = deck[j];
       deck[j] = deck[i];
@@ -40,17 +47,22 @@ export function runSampling(input: EngineInput, handSize: number, onProgress?: P
       deck[j] = deck[i];
       deck[i] = value;
     }
-    if (onProgress && (sample & 4095) === 0) onProgress(sample, samples);
+    if (onProgress && (sample & PROGRESS_STATE_MASK) === 0) onProgress(sample, samples);
   }
-  if (onProgress && (samples & 4095) !== 0) onProgress(samples, samples);
-  const p = successes / samples;
-  const z = 1.959963984540054;
-  const z2 = z * z;
-  const denominator = 1 + z2 / samples;
-  const center = (p + z2 / (2 * samples)) / denominator;
-  const radius = z * Math.sqrt(p * (1 - p) / samples + z2 / (4 * samples * samples)) / denominator;
+  if (onProgress && (samples & PROGRESS_STATE_MASK) !== 0) onProgress(samples, samples);
+  return estimateWilsonInterval(successes, samples);
+}
+
+function estimateWilsonInterval(successes: number, samples: number): Estimate {
+  const probability = successes / samples;
+  const squaredZ = WILSON_Z_95 * WILSON_Z_95;
+  const denominator = 1 + squaredZ / samples;
+  const center = (probability + squaredZ / (2 * samples)) / denominator;
+  const variance = probability * (1 - probability) / samples;
+  const correction = squaredZ / (4 * samples * samples);
+  const radius = WILSON_Z_95 * Math.sqrt(variance + correction) / denominator;
   return {
-    p, method: 'sampling', samples,
+    p: probability, method: 'sampling', samples,
     lo: successes === 0 ? 0 : Math.max(0, center - radius),
     hi: successes === samples ? 1 : Math.min(1, center + radius),
   };

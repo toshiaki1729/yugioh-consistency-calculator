@@ -1,16 +1,25 @@
 import { createHandMatcher } from './flow';
 import type { EngineInput, ExactResult, ProgressCallback } from './types';
+import { MAX_DECK_SIZE, PROGRESS_STATE_MASK } from './constants';
 
-const combinations = Array.from({ length: 61 }, () => new Float64Array(61));
-for (let n = 0; n <= 60; n++) {
-  combinations[n][0] = combinations[n][n] = 1;
-  for (let k = 1; k < n; k++) combinations[n][k] = combinations[n - 1][k - 1] + combinations[n - 1][k];
+const combinations = Array.from(
+  { length: MAX_DECK_SIZE + 1 }, () => new Float64Array(MAX_DECK_SIZE + 1),
+);
+for (let population = 0; population <= MAX_DECK_SIZE; population++) {
+  const row = combinations[population];
+  row[0] = row[population] = 1;
+  for (let selected = 1; selected < population; selected++) {
+    const previous = combinations[population - 1];
+    row[selected] = previous[selected - 1] + previous[selected];
+  }
 }
 
-export function binomial(n: number, k: number): number {
-  return k < 0 || k > n ? 0 : combinations[n][k];
+/** デッキから指定枚数を選ぶ組み合わせ数を返す。 */
+export function binomial(population: number, selected: number): number {
+  return selected < 0 || selected > population ? 0 : combinations[population][selected];
 }
 
+/** 列挙対象の手札ベクトル数を数える。 */
 export function countStates(input: EngineInput, handSize: number): number {
   let counts = new Float64Array(handSize + 1);
   counts[0] = 1;
@@ -27,6 +36,7 @@ export function countStates(input: EngineInput, handSize: number): number {
   return counts[handSize];
 }
 
+/** 手札ベクトルを全列挙して厳密確率を求める。 */
 export function runExact(
   input: EngineInput,
   handSize: number,
@@ -50,7 +60,7 @@ export function runExact(
       weightSum += fullWeight;
       if (matches(hand)) successWeight += fullWeight;
       done++;
-      if (onProgress && (done & 4095) === 0) onProgress(done, states);
+      if (onProgress && (done & PROGRESS_STATE_MASK) === 0) onProgress(done, states);
       return;
     }
     const min = Math.max(0, remaining - suffix[index + 1]);
@@ -62,9 +72,10 @@ export function runExact(
     }
   };
   visit(0, handSize, 1);
-  if (onProgress && (done & 4095) !== 0) onProgress(done, states);
+  if (onProgress && (done & PROGRESS_STATE_MASK) !== 0) onProgress(done, states);
+  const probability = successWeight / combinations[input.deckSize][handSize];
   return {
-    estimate: { p: successWeight / combinations[input.deckSize][handSize], method: 'exact', states },
+    estimate: { p: probability, method: 'exact', states },
     weightSum,
   };
 }
