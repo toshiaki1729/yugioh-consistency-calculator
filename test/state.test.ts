@@ -51,6 +51,85 @@ class FakeStorage implements StateStorage {
 
 afterEach(() => { vi.useRealTimers(); });
 
+describe('カスタムカードとエントリの同時追加', () => {
+  it.each(['main', 'extra', 'side'] as const)('%s に採番したカードを同じ更新で追加する', section => {
+    const initial = app();
+    const before = structuredClone(initial);
+    const h = harness(initial);
+    h.send({
+      type: 'customCard/add',
+      card: { name: '同時追加', kind: 'spell', monsterTypes: [], text: '' },
+      addToDeck: { section, count: 3 },
+    });
+    expect(h.state.lastError).toBeNull();
+    expect(h.deck.customCards.at(-1)).toEqual({
+      id: 'c:new-1', name: '同時追加', kind: 'spell', monsterTypes: [], text: '', custom: true,
+    });
+    expect(h.deck.entries.at(-1)).toEqual({
+      cardId: 'c:new-1', name: '同時追加', section, count: 3,
+    });
+    expect(h.deck.updatedAt).toBe(1234);
+    expect(initial).toEqual(before);
+  });
+
+  it('addToDeck を省略した既存の操作ではエントリを追加しない', () => {
+    const h = harness();
+    const beforeEntries = structuredClone(h.deck.entries);
+    h.send({
+      type: 'customCard/add',
+      card: { name: 'カードのみ', kind: 'trap', monsterTypes: [], text: '' },
+    });
+    expect(h.state.lastError).toBeNull();
+    expect(h.deck.customCards).toHaveLength(2);
+    expect(h.deck.entries).toEqual(beforeEntries);
+  });
+
+  it.each([0, 61, 1.5, NaN])('枚数 %s が不正ならカードもエントリも反映しない', count => {
+    const initial = app();
+    const before = structuredClone(initial);
+    const h = harness(initial);
+    h.send({
+      type: 'customCard/add',
+      card: { name: '拒否対象', kind: 'spell', monsterTypes: [], text: '' },
+      addToDeck: { section: 'main', count },
+    });
+    expect(h.state.lastError).toContain('枚数');
+    expect(h.state.app).toBe(initial);
+    expect(initial).toEqual(before);
+  });
+
+  it.each(['customCards', 'entries'] as const)('%s の上限超過なら更新全体を拒否する', field => {
+    const initial = app();
+    if (field === 'customCards') {
+      initial.decks[0].customCards = Array.from({ length: 200 }, (_, i) => card(`c:existing-${i}`));
+    } else {
+      initial.decks[0].entries = Array.from({ length: 200 }, (_, i) => entry(`k${i}`));
+    }
+    const before = structuredClone(initial);
+    const h = harness(initial);
+    h.send({
+      type: 'customCard/add',
+      card: { name: '上限超過', kind: 'spell', monsterTypes: [], text: '' },
+      addToDeck: { section: 'main', count: 1 },
+    });
+    expect(h.state.lastError).toContain('上限');
+    expect(h.state.app).toBe(initial);
+    expect(initial).toEqual(before);
+  });
+
+  it('カード名が不正なら同時追加のエントリも反映しない', () => {
+    const initial = app();
+    const h = harness(initial);
+    h.send({
+      type: 'customCard/add',
+      card: { name: '', kind: 'spell', monsterTypes: [], text: '' },
+      addToDeck: { section: 'side', count: 2 },
+    });
+    expect(h.state.lastError).not.toBeNull();
+    expect(h.state.app).toBe(initial);
+  });
+});
+
 describe('状態の編集', () => {
   it('初回は空の「新しいデッキ」を選択し、ID と時刻を注入できる', () => {
     const state = createInitialState({ newId: () => 'first', now: () => 42 });

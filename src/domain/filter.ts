@@ -5,27 +5,29 @@ const normalizedCards = new WeakMap<CardData, {
   name: string; kana: string; text: string; pendulumText: string;
 }>();
 
+/** カードが条件式を満たすか判定する。 */
 export function evaluateFilter(node: FilterNode, card: CardData): boolean {
   switch (node.op) {
     case 'and': return node.children.every(child => evaluateFilter(child, card));
     case 'or': return node.children.some(child => evaluateFilter(child, card));
     case 'not': return !evaluateFilter(node.child, card);
   }
-  const pred = node.pred;
-  switch (pred.kind) {
-    case 'cardKind': return pred.values.includes(card.kind);
-    case 'monsterType': return pred.mode === 'all'
-      ? pred.values.every(value => card.monsterTypes.includes(value))
-      : pred.values.some(value => card.monsterTypes.includes(value));
-    case 'attribute': return card.attribute !== undefined && pred.values.includes(card.attribute);
-    case 'race': return card.race !== undefined && pred.values.includes(card.race);
-    case 'property': return card.property !== undefined && pred.values.includes(card.property);
-    case 'cards': return pred.cardIds.includes(card.id);
+  const predicate = node.pred;
+  switch (predicate.kind) {
+    case 'cardKind': return predicate.values.includes(card.kind);
+    case 'monsterType': return predicate.mode === 'all'
+      ? predicate.values.every(value => card.monsterTypes.includes(value))
+      : predicate.values.some(value => card.monsterTypes.includes(value));
+    case 'attribute': return card.attribute !== undefined
+      && predicate.values.includes(card.attribute);
+    case 'race': return card.race !== undefined && predicate.values.includes(card.race);
+    case 'property': return card.property !== undefined && predicate.values.includes(card.property);
+    case 'cards': return predicate.cardIds.includes(card.id);
     case 'level': case 'rank': case 'link': case 'atk': case 'def': case 'scale': {
-      const value = card[pred.kind];
+      const value = card[predicate.kind];
       return value !== undefined && value !== null
-        && (pred.range.min === undefined || value >= pred.range.min)
-        && (pred.range.max === undefined || value <= pred.range.max);
+        && (predicate.range.min === undefined || value >= predicate.range.min)
+        && (predicate.range.max === undefined || value <= predicate.range.max);
     }
   }
   let normalized = normalizedCards.get(card);
@@ -36,11 +38,11 @@ export function evaluateFilter(node: FilterNode, card: CardData): boolean {
     };
     normalizedCards.set(card, normalized);
   }
-  const keyword = normalizeForMatch(pred.text);
-  switch (pred.kind) {
+  const keyword = normalizeForMatch(predicate.text);
+  switch (predicate.kind) {
     case 'nameContains': return normalized.name.includes(keyword);
     case 'textContains': return normalized.text.includes(keyword)
-      || (pred.includePendulum && normalized.pendulumText.includes(keyword));
+      || (predicate.includePendulum && normalized.pendulumText.includes(keyword));
     case 'archetype': return normalized.name.includes(keyword) || normalized.kana.includes(keyword)
       || new RegExp(`「[^」]*${escapeRegExp(keyword)}[^」]*」カードとしても扱う`).test(normalized.text);
     case 'mentionsName': {
@@ -52,6 +54,7 @@ export function evaluateFilter(node: FilterNode, card: CardData): boolean {
   }
 }
 
+/** 手動の除外・追加を優先してグループへの所属を判定する。 */
 export function isInGroup(group: CardGroup, cardId: CardId, card: CardData | undefined): boolean {
   if (group.exclude.includes(cardId)) return false;
   if (group.include.includes(cardId)) return true;
