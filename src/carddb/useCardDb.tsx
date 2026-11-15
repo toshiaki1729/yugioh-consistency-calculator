@@ -1,5 +1,5 @@
 import {
-  createContext, useContext, useEffect, useRef, useState, useSyncExternalStore,
+  createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore,
 } from 'react';
 import type { ReactNode } from 'react';
 import type { CardId } from '../domain/types';
@@ -52,7 +52,9 @@ export function useCardDb(): CardDbContextValue {
 export function useResolveCard() {
   const { activeDeck } = useAppState();
   const state = useCardDb();
-  return (id: CardId) => activeDeck?.customCards.find(card => card.id === id)
-    ?? (state.status === 'ready' ? state.db.getCard(id) : undefined)
-    ?? activeDeck?.pageData[id];
+  const db = state.status === 'ready' ? state.db : undefined;
+  return useCallback((id: CardId) => activeDeck?.customCards.find(card => card.id === id)
+    ?? db?.getCard(id)
+    ?? (activeDeck && Object.hasOwn(activeDeck.pageData, id)
+      ? activeDeck.pageData[id] : undefined), [activeDeck, db]);
 }

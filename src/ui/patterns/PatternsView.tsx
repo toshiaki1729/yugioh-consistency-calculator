@@ -48,7 +48,9 @@ export function PatternsView({ deck }: { deck: Deck }) {
     {calculation.stale && <p className="PatternsView-warning">古い結果（再計算してください）</p>}
     <ul className="PatternsView-list" aria-label="パターン一覧">{deck.patterns.map((pattern, index) =>
       <PatternListRow key={pattern.id} deck={deck} pattern={pattern} index={index}
-        isSelected={selected?.id === pattern.id} estimate={first?.perPattern[pattern.id]}
+        isSelected={selected?.id === pattern.id}
+        estimate={first && Object.hasOwn(first.perPattern, pattern.id)
+          ? first.perPattern[pattern.id] : undefined}
         onSelect={setSelectedId} onMove={movePattern}
         onDuplicate={handleDuplicate} onDelete={setDeletingId} />)}</ul>
     {selected && <PatternEditor key={selected.id} deck={deck} pattern={selected} />}

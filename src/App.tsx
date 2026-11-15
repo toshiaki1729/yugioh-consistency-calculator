@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { AppShell } from './ui/layout/AppShell';
 import { Tabs } from './ui/layout/Tabs';
-import { AppStateProvider, useAppState } from './state/store';
+import { AppStateProvider, useAppState, useSaveStatus } from './state/store';
+import { ErrorBoundary } from './ui/layout/ErrorBoundary';
 import type { AppStateProviderProps } from './state/store';
 import { CardDbProvider } from './carddb/useCardDb';
 import type { CardDb, createCardDbLoader } from './carddb/loader';
@@ -81,6 +83,14 @@ function AppEditor({ activeDeck, activeTab, onSelect, onImport }: {
   return <Tabs activeId={activeTab} onSelect={onSelect} items={items} />;
 }
 
+function AppErrorBoundary({ children }: { children: ReactNode }) {
+  const { activeDeck } = useAppState();
+  const saveStatus = useSaveStatus();
+  return <ErrorBoundary activeDeck={activeDeck} saveStatus={saveStatus}>
+    {children}
+  </ErrorBoundary>;
+}
+
 /** 保存・カードDB・計算の接続を設定し、アプリ全体を表示する。 */
 export default function App({ db, loader, createWorker, ...stateProps }:
   Omit<AppStateProviderProps, 'children'> & {
@@ -88,7 +98,9 @@ export default function App({ db, loader, createWorker, ...stateProps }:
 } = {}) {
   return <AppStateProvider {...stateProps}>
     <CardDbProvider db={db} loader={loader}>
-      <CalculationProvider createWorker={createWorker}><AppContent /></CalculationProvider>
+      <AppErrorBoundary>
+        <CalculationProvider createWorker={createWorker}><AppContent /></CalculationProvider>
+      </AppErrorBoundary>
     </CardDbProvider>
   </AppStateProvider>;
 }

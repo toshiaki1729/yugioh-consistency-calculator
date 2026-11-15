@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { useResolveCard } from '../../carddb/useCardDb';
 import { compile } from '../../engine/compile';
@@ -37,13 +37,15 @@ export function CalculationProvider({ children, createWorker }: {
   const resolveCard = useResolveCard();
   const deckId = activeDeck?.id ?? null;
   const customHandSize = app.settings.customHandSize;
-  const handSizes = [FIRST_HAND_SIZE, SECOND_HAND_SIZE];
-  if (customHandSize !== null && !handSizes.includes(customHandSize)) {
-    handSizes.push(customHandSize);
-  }
-  const compiled = activeDeck ? compile(activeDeck, resolveCard, handSizes) : null;
+  const handSizes = useMemo(() => {
+    const sizes = [FIRST_HAND_SIZE, SECOND_HAND_SIZE];
+    if (customHandSize !== null && !sizes.includes(customHandSize)) sizes.push(customHandSize);
+    return sizes;
+  }, [customHandSize]);
+  const compiled = useMemo(() => activeDeck ? compile(activeDeck, resolveCard, handSizes) : null,
+    [activeDeck, resolveCard, handSizes]);
   const input = compiled?.ok ? compiled.value : null;
-  const inputKey = input ? stableInputKey(input) : null;
+  const inputKey = useMemo(() => input ? stableInputKey(input) : null, [input]);
   const { snapshot, ...task } = useCalculationTask(deckId, input, inputKey, createWorker);
   const visible = snapshot?.deckId === deckId ? snapshot : null;
   let reason: string | null = null;

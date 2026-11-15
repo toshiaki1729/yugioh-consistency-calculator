@@ -68,6 +68,9 @@ export const MAX_TITLE_LENGTH = 50;
 /** カード名の最大文字数。 */
 export const MAX_CARD_NAME_LENGTH = 100;
 
+/** 貼り付けるカード一覧の1行の最大文字数。 */
+export const MAX_IMPORT_LINE_LENGTH = 200;
+
 /** 条件キーワードの最大文字数。 */
 export const MAX_KEYWORD_LENGTH = 100;
 

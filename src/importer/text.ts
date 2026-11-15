@@ -1,6 +1,6 @@
 import { normalizeForMatch } from '../domain/normalize';
 import {
-  MAX_CARD_NAME_LENGTH, MAX_ENTRIES, MAX_ENTRY_COUNT, MIN_ENTRY_COUNT,
+  MAX_CARD_NAME_LENGTH, MAX_ENTRIES, MAX_ENTRY_COUNT, MAX_IMPORT_LINE_LENGTH, MIN_ENTRY_COUNT,
 } from '../domain/limits';
 import type { Section } from '../domain/types';
 import { MAX_IMPORT_LENGTH, validatePayload } from './payload';
@@ -30,6 +30,10 @@ export function parseDeckText(
   const errors: ParsedDeckText['errors'] = [];
   const lines = text.split(/\r\n|\n|\r/);
   for (let i = 0; i < lines.length; i++) {
+    if (lines[i].length > MAX_IMPORT_LINE_LENGTH) {
+      errors.push({ line: i + 1, message: `1 行は ${MAX_IMPORT_LINE_LENGTH} 文字以下にしてください` });
+      continue;
+    }
     const line = lines[i].trim();
     if (!line || line.startsWith('#')) continue;
     const heading = normalizeForMatch(line.replace(/[【】\[\]［］<>＜＞■◆●#＃:：\-－=＝\s]/g, ''));
@@ -64,14 +68,23 @@ function parseJsonText(text: string): ParsedDeckText {
 
 function parseCardLine(line: string, isKnownName: (name: string) => boolean) {
   if (isKnownName(line)) return { name: line, count: 1 };
-  const prefix = line.match(/^([+-]?[0-9０-９]+)\s+(.*)$/);
-  const suffix = line.match(/^(.*?)\s*[x×*]\s*([+-]?[0-9０-９]+)$/i);
-  const tab = line.match(/^(.*?)\t\s*([+-]?[0-9０-９]+)$/);
-  const trailing = line.match(/^(.*?)\s+([+-]?[0-9０-９]+)$/);
+  const prefix = line.match(/^([+-]?[0-9０-９]+)\s+/);
   if (prefix) {
-    return { name: prefix[2].trim(), count: Number(prefix[1].normalize('NFKC')) };
+    return {
+      name: line.slice(prefix[0].length).trim(), count: Number(prefix[1].normalize('NFKC')),
+    };
   }
-  const match = suffix ?? tab ?? (trailing && isKnownName(trailing[1].trim()) ? trailing : null);
-  if (match) return { name: match[1].trim(), count: Number(match[2].normalize('NFKC')) };
+  let numberStart = line.length;
+  while (numberStart > 0 && /[0-9０-９]/.test(line[numberStart - 1])) numberStart--;
+  if (numberStart === line.length) return { name: line, count: 1 };
+  if (numberStart > 0 && /[+-]/.test(line[numberStart - 1])) numberStart--;
+  const beforeNumber = line.slice(0, numberStart);
+  const name = beforeNumber.trimEnd();
+  const count = Number(line.slice(numberStart).normalize('NFKC'));
+  if (/[x×*]$/i.test(name)) return { name: name.slice(0, -1).trim(), count };
+  const separator = beforeNumber.slice(name.length);
+  if (separator.includes('\t') || (separator.length > 0 && isKnownName(name))) {
+    return { name, count };
+  }
   return { name: line, count: 1 };
 }

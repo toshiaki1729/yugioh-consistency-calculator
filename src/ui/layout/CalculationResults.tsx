@@ -21,7 +21,8 @@ export function CalculationResults({ results }: { results: HandResult[] }) {
     / MILLISECONDS_PER_SECOND).toFixed(ELAPSED_DECIMAL_PLACES);
   function renderPattern(pattern: Pattern) {
     return <PatternResult key={pattern.id} pattern={pattern}
-      estimate={first?.perPattern[pattern.id]} />;
+      estimate={first && Object.hasOwn(first.perPattern, pattern.id)
+        ? first.perPattern[pattern.id] : undefined} />;
   }
   return <>
     <table className="result-table" aria-label="初動率">
