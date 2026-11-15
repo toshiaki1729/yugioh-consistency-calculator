@@ -8,14 +8,14 @@ export const percentFormat = new Intl.NumberFormat('ja-JP', {
   maximumFractionDigits: PERCENT_FRACTION_DIGITS,
 });
 
-/** 初動率とサンプリング時の95%信頼区間を表示する。 */
+/** 初動率とサンプリング・シミュレーション時の95%信頼区間を表示する。 */
 export function EstimateValue({ estimate, prominent = false }: {
   estimate: Estimate; prominent?: boolean;
 }) {
   const className = prominent ? 'EstimateValue-prominent' : undefined;
   return <span className="EstimateValue">
     <span className={className}>{percentFormat.format(estimate.p)}</span>
-    {estimate.method === 'sampling' && estimate.lo !== undefined && estimate.hi !== undefined &&
+    {estimate.method !== 'exact' && estimate.lo !== undefined && estimate.hi !== undefined &&
       <span className="EstimateValue-interval" aria-label="95% 信頼区間">
         （{percentFormat.format(estimate.lo).replace('%', '')}〜{percentFormat.format(estimate.hi)}）
       </span>}

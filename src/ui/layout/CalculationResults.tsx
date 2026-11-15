@@ -2,6 +2,7 @@ import type { Estimate, HandResult } from '../../engine/types';
 import type { Pattern } from '../../domain/types';
 import { useAppState } from '../../state/store';
 import { EstimateValue } from '../patterns/EstimateValue';
+import { formatEstimateMethod } from './estimateMethod';
 
 /** 結果を強調表示する先攻の手札枚数。 */
 export const FIRST_HAND_SIZE = 5;
@@ -17,6 +18,9 @@ export function CalculationResults({ results }: { results: HandResult[] }) {
     Object.values(result.perPattern).some(estimate =>
       (result.success.method === 'sampling' || estimate.method === 'sampling')
       && estimate.p > result.success.p));
+  const hasSimulationInversion = results.some(result =>
+    result.success.method === 'simulation'
+    && Object.values(result.perPattern).some(estimate => estimate.p > result.success.p));
   const elapsedSeconds = (results.reduce((sum, result) => sum + result.elapsedMs, 0)
     / MILLISECONDS_PER_SECOND).toFixed(ELAPSED_DECIMAL_PLACES);
   function renderPattern(pattern: Pattern) {
@@ -35,6 +39,11 @@ export function CalculationResults({ results }: { results: HandResult[] }) {
     <h2>パターン別（先攻 5 枚）</h2>
     <ul className="result-patterns">{activeDeck?.patterns.map(renderPattern)}</ul>
     {hasSamplingInversion && <p>サンプリングの誤差により、全体の値が単独パターンの値を下回ることがあります。</p>}
+    {hasSimulationInversion && <p>
+      シミュレーションでは、全体と各パターンを別々に判定します。
+      初動になったと判断して止めた後に「デッキの上から除外しても残っている」の条件で不成立になる場合などに、
+      全体の値が単独パターンの値を下回ることがあります。
+    </p>}
   </>;
 }
 
@@ -47,7 +56,7 @@ function HandResultRow({ result }: { result: HandResult }) {
     <td>
       <EstimateValue estimate={result.success} prominent={result.handSize === FIRST_HAND_SIZE} />
     </td>
-    <td>{result.success.method === 'exact' ? '厳密' : 'サンプリング'}</td>
+    <td>{formatEstimateMethod(result.success)}</td>
   </tr>;
 }
 

@@ -8,6 +8,9 @@ export type StepDraft = Exclude<EffectStep, { kind: 'search' | 'handCost' }>
   | { kind: 'handCost'; target: CardTarget | null;
     destination: 'graveyard' | 'banishedFaceUp' };
 
+/** 対象未設定の手順を含めて保持する効果の編集内容。 */
+export type EffectDraft = Omit<DrawEffect, 'id' | 'steps'> & { steps: StepDraft[] };
+
 const DEFAULT_DESTINATION = 'graveyard';
 
 /** 手順の種類の表示名。 */

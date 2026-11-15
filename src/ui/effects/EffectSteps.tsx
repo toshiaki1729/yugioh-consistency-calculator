@@ -1,33 +1,30 @@
 import { useRef, useState } from 'react';
 import { MAX_EFFECT_STEPS, MIN_DRAW_COUNT } from '../../domain/limits';
-import type { DrawEffect, EffectStep } from '../../domain/types';
 import { Button } from '../common/Button';
 import type { SlotOption } from '../patterns/SlotRow';
-import { isStepReady } from './effectForm';
 import type { StepDraft } from './effectForm';
 import { StepRow } from './StepRow';
 
 const STEP_FIELDS = ['kind', 'count', 'target', 'type', 'cardId', 'groupId', 'destination'];
 
-/** 未設定の手順を画面内で保持し、全対象が確定したときに保存する。 */
-export function EffectSteps({ effect, sources, onChange }: {
-  effect: DrawEffect; sources: SlotOption[]; onChange: (steps: EffectStep[]) => void;
+/** 手順を編集し、入力途中の行も並べ替え後に保持する。 */
+export function EffectSteps({ steps, sources, onChange }: {
+  steps: StepDraft[]; sources: SlotOption[]; onChange: (steps: StepDraft[]) => void;
 }) {
-  const saved = JSON.stringify(effect.steps, STEP_FIELDS);
-  const nextId = useRef(effect.steps.length);
+  const saved = JSON.stringify(steps, STEP_FIELDS);
+  const nextId = useRef(steps.length);
   const [draft, setDraft] = useState({ saved,
-    rows: effect.steps.map((step, id) => ({ id: String(id), step: step as StepDraft })),
+    rows: steps.map((step, id) => ({ id: String(id), step })),
   });
   if (draft.saved !== saved) {
-    setDraft({ saved, rows: effect.steps.map((step, index) => ({
+    setDraft({ saved, rows: steps.map((step, index) => ({
       id: `${saved}:${index}`, step,
     })) });
   }
   function updateRows(rows: typeof draft.rows) {
     const steps = rows.map(row => row.step);
-    const canSave = steps.every((step): step is EffectStep => isStepReady(step, sources));
-    setDraft({ saved: canSave ? JSON.stringify(steps, STEP_FIELDS) : saved, rows });
-    if (canSave) onChange(steps);
+    setDraft({ saved: JSON.stringify(steps, STEP_FIELDS), rows });
+    onChange(steps);
   }
   function editStep(index: number, step: StepDraft) {
     updateRows(draft.rows.map((row, position) => position === index ? { ...row, step } : row));

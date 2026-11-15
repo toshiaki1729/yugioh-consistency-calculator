@@ -8,6 +8,7 @@ import { EmptyState } from '../common/EmptyState';
 import type { SlotOption } from '../patterns/SlotRow';
 import { EffectEditor } from './EffectEditor';
 import { EffectListRow } from './EffectListRow';
+import { EffectPolicy } from './EffectPolicy';
 import './EffectsView.css';
 
 /** 優先順に並ぶドロー効果と、選択中の効果の編集を表示する。 */
@@ -40,6 +41,7 @@ export function EffectsView({ deck }: { deck: Deck }) {
     setSelectedId(selected?.id ?? null);
   }
   return <div className="EffectsView">
+    <EffectPolicy />
     {deck.effects.length === 0 && <EmptyState>
       カードのドロー効果を手順で設定すると、計算に反映されます。
     </EmptyState>}

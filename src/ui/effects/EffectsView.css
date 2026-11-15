@@ -48,3 +48,14 @@
   border-radius: var(--radius);
 }
 .EffectsView .Select, .EffectsView .Select select { min-width: 0; max-width: 100%; }
+.EffectsView-templates > .Button {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 36px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (width < 900px) {
+  .EffectsView-templates > .Button { min-height: 40px; }
+}

@@ -37,7 +37,7 @@ export function StepRow({ step, sources, index, total, onChange, onMove, onDelet
     </Select>
     <StepFields key={step.kind} step={step} sources={sources} onChange={onChange} />
     {!isStepReady(step, sources) && <p className="EffectsView-warning" role="status">
-      対象が未設定です。選ぶまで手順の変更は保存されません。
+      対象が未設定です。選ぶまで設定と手順の変更は保存されません。
     </p>}
     <div className="EffectsView-actions">
       <Button aria-label={`手順 ${index + 1} を上へ`} disabled={index === 0}

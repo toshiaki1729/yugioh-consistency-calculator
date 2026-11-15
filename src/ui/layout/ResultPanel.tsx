@@ -5,7 +5,7 @@ import { useAppState, useDispatch } from '../../state/store';
 import { Button } from '../common/Button';
 import { Select } from '../common/Select';
 import { useCalculation } from '../patterns/CalculationProvider';
-import { percentFormat } from '../patterns/EstimateValue';
+import { EstimateValue, percentFormat } from '../patterns/EstimateValue';
 import { CalculationResults, FIRST_HAND_SIZE } from './CalculationResults';
 
 /** 計算操作・進捗と折りたたみ可能な結果パネルを表示する。 */
@@ -15,6 +15,9 @@ export function ResultPanel() {
   const { results, stale: isStale, status, progress, error, reason } = calculation;
   const first = results?.find(result => result.handSize === FIRST_HAND_SIZE);
   const isRunning = status === 'running';
+  let barValue = <>未計算</>;
+  if (first) barValue = <>{percentFormat.format(first.success.p)}</>;
+  if (first?.success.method === 'simulation') barValue = <EstimateValue estimate={first.success} />;
   const button = <Button variant="primary" disabled={isRunning || reason !== null}
     aria-describedby={reason ? 'calculation-reason' : undefined} onClick={calculation.run}>
     計算する
@@ -27,7 +30,7 @@ export function ResultPanel() {
         aria-label={isExpanded ? '計算結果を折りたたむ' : '計算結果を展開する'}
         onClick={() => setIsExpanded(!isExpanded)}>
         <span>先攻 5 枚{isStale ? '・古い結果' : ''}</span>
-        <strong>{first ? percentFormat.format(first.success.p) : '未計算'}</strong>
+        <strong>{barValue}</strong>
         <span className="result-toggle-arrow" aria-hidden="true">{isExpanded ? '↓' : '↑'}</span>
       </button>
       {button}
