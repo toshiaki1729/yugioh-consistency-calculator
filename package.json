@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "fetch:cards": "node scripts/fetch-cards.mjs",
-    "build:cards": "node scripts/build-cards.mjs"
+    "build:cards": "node scripts/build-cards.mjs",
+    "lint:style": "node scripts/check-style.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
