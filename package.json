@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test": "vitest run",
-    "fetch:cards": "node -e \"console.log('T04 で実装')\"",
-    "build:cards": "node -e \"console.log('T04 で実装')\""
+    "fetch:cards": "node scripts/fetch-cards.mjs",
+    "build:cards": "node scripts/build-cards.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
