@@ -7,12 +7,12 @@ import * as limits from './limits';
 import type {
   CardData, CardGroup, Deck, DeckEntry, Pattern, Result, Slot, SlotSource,
 } from './types';
-import { decodeTitle, decodeCardName, decodeIds } from './validationFields';
+import { decodeTitle, decodeCardId, decodeCardName, decodeIds } from './validationFields';
 import { validateCardData } from './validateCard';
 import { validateFilter } from './validateFilter';
 
 const decodeEntry: Decoder<DeckEntry> = createShapeDecoder({
-  cardId: decodeId, name: decodeCardName,
+  cardId: decodeCardId, name: decodeCardName,
   count: createIntegerDecoder(limits.MIN_ENTRY_COUNT, limits.MAX_ENTRY_COUNT, '枚数'),
   section: createChoiceDecoder(['main', 'extra', 'side']),
 });
@@ -27,7 +27,7 @@ const decodeSource: Decoder<SlotSource> = (value, path) => {
       type: createChoiceDecoder(['group']), groupId: decodeId,
     }, record.value, path);
     case 'card': return readFields({
-      type: createChoiceDecoder(['card']), cardId: decodeId,
+      type: createChoiceDecoder(['card']), cardId: decodeCardId,
     }, record.value, path);
     default: return failValidation(`${path}.type`, '対象は group / card のいずれかで指定してください');
   }
@@ -50,12 +50,31 @@ const decodePageData: Decoder<Record<string, CardData>> = (value, path) => {
   }
   const cards: [string, CardData][] = [];
   for (const [key, input] of entries) {
+    const id = decodeCardId(key, `${path}.${key}`);
+    if (!id.ok) return id;
+    if (!id.value.startsWith('k')) {
+      return failValidation(`${path}.${key}`, '公式カードの補助データの ID は k と数字で指定してください');
+    }
     const card = validateCardData(input, `${path}.${key}`);
     if (!card.ok) return card;
     if (key !== card.value.id) return failValidation(`${path}.${key}`, 'キーとカードの ID が一致していません');
+    if (card.value.custom === true) {
+      return failValidation(`${path}.${key}.custom`, '公式カードの補助データは custom を true にしないでください');
+    }
     cards.push([key, card.value]);
   }
   return { ok: true, value: Object.fromEntries(cards) };
+};
+const decodeCustomCard: Decoder<CardData> = (value, path) => {
+  const card = validateCardData(value, path);
+  if (!card.ok) return card;
+  if (!card.value.id.startsWith('c:')) {
+    return failValidation(`${path}.id`, 'カスタムカードの ID は c: で始めてください');
+  }
+  if (card.value.custom !== true) {
+    return failValidation(`${path}.custom`, 'カスタムカードは custom を true にしてください');
+  }
+  return card;
 };
 const decodeTimestamp: Decoder<number> = (value, path) => {
   const isValid = typeof value === 'number' && Number.isFinite(value)
@@ -68,7 +87,7 @@ const decodeDeckData: Decoder<Deck> = createShapeDecoder({
   entries: createArrayDecoder(decodeEntry, limits.MAX_ENTRIES),
   groups: createArrayDecoder(decodeGroup, limits.MAX_GROUPS),
   patterns: createArrayDecoder(decodePattern, limits.MAX_PATTERNS),
-  customCards: createArrayDecoder(validateCardData, limits.MAX_CUSTOM_CARDS),
+  customCards: createArrayDecoder(decodeCustomCard, limits.MAX_CUSTOM_CARDS),
   pageData: decodePageData, updatedAt: decodeTimestamp,
 }, true);
 

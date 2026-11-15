@@ -103,7 +103,7 @@ describe('カスタムカードとエントリの同時追加', () => {
     if (field === 'customCards') {
       initial.decks[0].customCards = Array.from({ length: 200 }, (_, i) => card(`c:existing-${i}`));
     } else {
-      initial.decks[0].entries = Array.from({ length: 200 }, (_, i) => entry(`k${i}`));
+      initial.decks[0].entries = Array.from({ length: 200 }, (_, i) => entry(`k${i || 200}`));
     }
     const before = structuredClone(initial);
     const h = harness(initial);
@@ -367,7 +367,7 @@ describe('状態の編集', () => {
 describe('上限とエラー時の原子性', () => {
   it.each([
     ['デッキ', (a: AppState) => { a.decks = Array.from({ length: 50 }, (_, i) => ({ ...deck(), id: `d${i}` })); }, { type: 'deck/create' }],
-    ['エントリ', (a: AppState) => { a.decks[0].entries = Array.from({ length: 200 }, (_, i) => entry(`k${i}`)); }, { type: 'entry/add', cardId: 'k201', name: '追加', section: 'main' }],
+    ['エントリ', (a: AppState) => { a.decks[0].entries = Array.from({ length: 200 }, (_, i) => entry(`k${i || 200}`)); }, { type: 'entry/add', cardId: 'k201', name: '追加', section: 'main' }],
     ['グループ', (a: AppState) => { a.decks[0].groups = Array.from({ length: 200 }, (_, i) => group(`g${i}`)); }, { type: 'group/create' }],
     ['グループの複製', (a: AppState) => { a.decks[0].groups = Array.from({ length: 200 }, (_, i) => group(`g${i}`)); }, { type: 'group/duplicate', groupId: 'g1' }],
     ['パターン', (a: AppState) => { a.decks[0].patterns = Array.from({ length: 200 }, (_, i) => pattern(`p${i}`, [])); }, { type: 'pattern/create' }],
@@ -439,7 +439,7 @@ describe('上限とエラー時の原子性', () => {
 
   it('上限200エントリでも既存カードへの合算は許可する', () => {
     const initial = app();
-    initial.decks[0].entries = Array.from({ length: 200 }, (_, i) => entry(`k${i}`));
+    initial.decks[0].entries = Array.from({ length: 200 }, (_, i) => entry(`k${i || 200}`));
     const h = harness(initial);
     h.send({ type: 'entry/add', cardId: 'k1', name: 'カード', section: 'main' });
     expect(h.state.lastError).toBeNull();
@@ -461,7 +461,7 @@ describe('復元とデバウンス保存', () => {
     const original = app();
     original.decks[0].patterns[0].slots.push(
       { ...slot('s2'), source: { type: 'group', groupId: 'missing' } },
-      { ...slot('s3'), source: { type: 'card', cardId: 'unknown' } },
+      { ...slot('s3'), source: { type: 'card', cardId: 'k999999' } },
     );
     original.decks[0].patterns.push(pattern('p2', [{ ...slot('s4'), source: { type: 'group', groupId: 'missing' } }]));
     storage.data.set(STORAGE_KEY, JSON.stringify(original));
@@ -469,7 +469,7 @@ describe('復元とデバウンス保存', () => {
     expect(loaded.saveBlocked).toBe(false);
     expect(loaded.notice).toContain('2 件');
     expect(loaded.state.decks[0].patterns.map(p => p.slots.length)).toEqual([2, 0]);
-    expect(loaded.state.decks[0].patterns[0].slots[1].source).toEqual({ type: 'card', cardId: 'unknown' });
+    expect(loaded.state.decks[0].patterns[0].slots[1].source).toEqual({ type: 'card', cardId: 'k999999' });
     expect(storage.writes).toEqual([]);
     storage.data.set(STORAGE_KEY, JSON.stringify(app()));
     expect(loadState(storage)).toEqual({ state: app(), notice: null, saveBlocked: false });

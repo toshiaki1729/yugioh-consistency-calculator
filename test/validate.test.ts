@@ -53,7 +53,7 @@ describe('条件式の検証', () => {
     for (const text of ['', 'あ'.repeat(101), 1, null]) invalid(validateFilter({ op: 'pred', pred: { kind, text, includePendulum: false } }), 'text');
   });
   it('ID配列は200件まで', () => {
-    valid(validateFilter(pred({ kind: 'cards', cardIds: Array.from({ length: 200 }, (_, i) => `k${i}`) })));
+    valid(validateFilter(pred({ kind: 'cards', cardIds: Array.from({ length: 200 }, (_, i) => `k${i + 1}`) })));
     invalid(validateFilter(pred({ kind: 'cards', cardIds: Array(201).fill('k1') })), '200');
     for (const cardIds of [[1], [''], null]) invalid(validateFilter({ op: 'pred', pred: { kind: 'cards', cardIds } }));
   });
@@ -131,11 +131,11 @@ describe('デッキの件数・文字数・数値', () => {
   it.each(['entries', 'groups', 'patterns', 'customCards', 'pageData'] as const)('%s は200件まで', field => {
     for (const length of [200, 201]) {
       const input = deck();
-      if (field === 'entries') input.entries = Array.from({ length }, (_, i) => ({ cardId: `k${i}`, name: 'カード', count: 1, section: 'main' }));
+      if (field === 'entries') input.entries = Array.from({ length }, (_, i) => ({ cardId: `k${i + 1}`, name: 'カード', count: 1, section: 'main' }));
       if (field === 'groups') input.groups = Array.from({ length }, (_, i) => group(`g${i}`));
       if (field === 'patterns') input.patterns = Array.from({ length }, (_, i) => ({ ...pattern(`p${i}`), slots: [] }));
       if (field === 'customCards') input.customCards = Array.from({ length }, (_, i) => ({ ...card(`c:${i}`), custom: true }));
-      if (field === 'pageData') input.pageData = Object.fromEntries(Array.from({ length }, (_, i) => [`k${i}`, card(`k${i}`)]));
+      if (field === 'pageData') input.pageData = Object.fromEntries(Array.from({ length }, (_, i) => [`k${i + 1}`, card(`k${i + 1}`)]));
       if (length === 200) valid(validateDeck(input));
       else invalid(validateDeck(input), '200');
     }
@@ -207,7 +207,7 @@ describe('ID・参照・型の検証', () => {
     const input = deck();
     if (field === 'groups') input.groups.push(group());
     if (field === 'patterns') input.patterns.push({ ...pattern(), slots: [] });
-    if (field === 'customCards') input.customCards = [card('c:1'), card('c:1')];
+    if (field === 'customCards') input.customCards = [{ ...card('c:1'), custom: true }, { ...card('c:1'), custom: true }];
     invalid(validateDeck(input), '重複');
   });
   it('スロットIDはパターン内・パターン間とも一意', () => {
@@ -316,7 +316,7 @@ describe('アプリ状態と復元', () => {
     const clean = state();
     clean.decks[0].groups[0].filter = { op: 'not', child: pred({ kind: 'level', range: { min: 1 } }) };
     clean.decks[0].pageData = { k1: card() };
-    clean.decks[0].customCards = [card('c:1')];
+    clean.decks[0].customCards = [{ ...card('c:1'), custom: true }];
     function withExtras(value: unknown): unknown {
       if (Array.isArray(value)) return value.map(withExtras);
       if (value !== null && typeof value === 'object') {

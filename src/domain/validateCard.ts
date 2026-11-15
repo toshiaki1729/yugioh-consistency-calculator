@@ -1,12 +1,12 @@
 import {
   createShapeDecoder, createStringDecoder, createIntegerDecoder, allowUndefined, allowNull,
-  createArrayDecoder, decodeId, decodeBoolean,
+  decodeBoolean,
 } from './decoder';
 import type { Decoder } from './decoder';
 import * as limits from './limits';
 import type { CardData, Result } from './types';
 import {
-  decodeCardName, decodeCardText, decodeCardKind, decodeMonsterType, decodeAttribute,
+  decodeCardId, decodeCardName, decodeCardText, decodeCardKind, decodeMonsterTypes, decodeAttribute,
   decodeProperty, decodeRace, decodeNumericValue,
 } from './validationFields';
 
@@ -17,9 +17,9 @@ const decodeKana = createStringDecoder(limits.MIN_NAME_LENGTH, limits.MAX_KANA_L
 const decodeOptionalNumber = allowUndefined(decodeNumericValue);
 const decodeCombatStat = allowUndefined(allowNull(decodeNumericValue));
 const decodeCardData: Decoder<CardData> = createShapeDecoder({
-  id: decodeId, konamiId: allowUndefined(decodeKonamiId),
+  id: decodeCardId, konamiId: allowUndefined(decodeKonamiId),
   name: decodeCardName, kana: allowUndefined(decodeKana), kind: decodeCardKind,
-  monsterTypes: createArrayDecoder(decodeMonsterType),
+  monsterTypes: decodeMonsterTypes,
   attribute: allowUndefined(decodeAttribute), race: allowUndefined(decodeRace),
   level: decodeOptionalNumber, rank: decodeOptionalNumber, link: decodeOptionalNumber,
   atk: decodeCombatStat, def: decodeCombatStat, scale: decodeOptionalNumber,

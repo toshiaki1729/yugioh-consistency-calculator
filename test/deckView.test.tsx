@@ -141,7 +141,7 @@ describe('デッキ編集', () => {
     const deck = state.decks[0];
     const monster = db.getCard('k12950')!;
     const spell = db.findByExactName('強欲な壺')[0];
-    deck.customCards = [{ ...monster, name: 'カスタム優先', custom: true }];
+    deck.customCards = [{ ...monster, id: 'c:priority', name: 'カスタム優先', custom: true }];
     deck.pageData = {
       [monster.id]: { ...monster, name: 'ページ側モンスター' },
       [spell.id]: { ...spell, name: 'ページ側魔法' },
@@ -151,7 +151,7 @@ describe('デッキ編集', () => {
       { cardId: 'k888888', name: '未取得カード', count: 1, section: 'main' },
       { cardId: 'k999999', name: '旧名称', count: 1, section: 'main' },
       { cardId: spell.id, name: spell.name, count: 1, section: 'main' },
-      { cardId: monster.id, name: monster.name, count: 1, section: 'main' },
+      { cardId: 'c:priority', name: monster.name, count: 1, section: 'main' },
     ];
     setup({ state });
     const rows = within(screen.getByRole('region', { name: 'メイン 4 枚' })).getAllByRole('listitem');

@@ -6,8 +6,8 @@ import type { Decoder } from './decoder';
 import * as limits from './limits';
 import type { FilterNode, NumRange, Predicate, Result } from './types';
 import {
-  decodeNumericValue, decodeKeyword, decodeCardKind, decodeMonsterType, decodeAttribute,
-  decodeProperty, decodeRace, decodeIds,
+  decodeNumericValue, decodeKeyword, decodeCardKinds, decodeMonsterTypes, decodeAttributes,
+  decodeProperties, decodeRaces, decodeIds,
 } from './validationFields';
 
 const decodeRangeFields = createShapeDecoder({
@@ -27,20 +27,20 @@ const decodePredicate: Decoder<Predicate> = (value, path) => {
   const input = record.value;
   switch (input.kind) {
     case 'cardKind': return readFields({
-      kind: createChoiceDecoder(['cardKind']), values: createArrayDecoder(decodeCardKind),
+      kind: createChoiceDecoder(['cardKind']), values: decodeCardKinds,
     }, input, path);
     case 'monsterType': return readFields({
-      kind: createChoiceDecoder(['monsterType']), values: createArrayDecoder(decodeMonsterType),
+      kind: createChoiceDecoder(['monsterType']), values: decodeMonsterTypes,
       mode: createChoiceDecoder(['any', 'all']),
     }, input, path);
     case 'attribute': return readFields({
-      kind: createChoiceDecoder(['attribute']), values: createArrayDecoder(decodeAttribute),
+      kind: createChoiceDecoder(['attribute']), values: decodeAttributes,
     }, input, path);
     case 'race': return readFields({
-      kind: createChoiceDecoder(['race']), values: createArrayDecoder(decodeRace),
+      kind: createChoiceDecoder(['race']), values: decodeRaces,
     }, input, path);
     case 'property': return readFields({
-      kind: createChoiceDecoder(['property']), values: createArrayDecoder(decodeProperty),
+      kind: createChoiceDecoder(['property']), values: decodeProperties,
     }, input, path);
     case 'cards': return readFields({
       kind: createChoiceDecoder(['cards']), cardIds: decodeIds,

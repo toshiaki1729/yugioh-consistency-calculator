@@ -104,3 +104,14 @@ export function createArrayDecoder<T>(decode: Decoder<T>, max = Infinity): Decod
   };
 }
 
+/** 件数上限・各要素・値の重複を検証するデコーダを作る。 */
+export function createUniqueArrayDecoder<T>(decode: Decoder<T>, max: number): Decoder<T[]> {
+  const decodeArray = createArrayDecoder(decode, max);
+  return (value, path) => {
+    const parsed = decodeArray(value, path);
+    if (!parsed.ok) return parsed;
+    return new Set(parsed.value).size === parsed.value.length
+      ? parsed : failValidation(path, '値が重複しています');
+  };
+}
+

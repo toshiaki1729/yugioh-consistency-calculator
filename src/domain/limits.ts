@@ -1,3 +1,7 @@
+import {
+  attributeLabels, cardKindLabels, monsterTypeLabels, spellTrapPropertyLabels,
+} from './labels';
+
 /** 保存できるデッキ数の上限。 */
 export const MAX_DECKS = 50;
 
@@ -72,6 +76,24 @@ export const MAX_KANA_LENGTH = 100;
 
 /** 種族名の最大文字数。 */
 export const MAX_RACE_LENGTH = 100;
+
+/** 種族条件に指定できる値の上限。 */
+export const MAX_RACE_VALUES = 30;
+
+/** カードの種類条件に指定できる値の上限。 */
+export const MAX_CARD_KIND_VALUES = Object.keys(cardKindLabels).length;
+
+/** モンスターの種類に指定できる値の上限。 */
+export const MAX_MONSTER_TYPE_VALUES = Object.keys(monsterTypeLabels).length;
+
+/** 属性条件に指定できる値の上限。 */
+export const MAX_ATTRIBUTE_VALUES = Object.keys(attributeLabels).length;
+
+/** 魔法・罠の種類条件に指定できる値の上限。 */
+export const MAX_PROPERTY_VALUES = Object.keys(spellTrapPropertyLabels).length;
+
+/** カスタムカード ID の c: に続く部分の最大文字数。 */
+export const MAX_CUSTOM_CARD_ID_LENGTH = 64;
 
 /** カードテキストの最小文字数。 */
 export const MIN_CARD_TEXT_LENGTH = 0;
