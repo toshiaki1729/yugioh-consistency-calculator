@@ -72,6 +72,17 @@
     window.alert('コピーしました。アプリの取り込み欄に貼り付けてください');
   }
 
+  function copyFromTextarea(textarea) {
+    textarea.focus();
+    textarea.select();
+    try {
+      return Boolean(document.execCommand && document.execCommand('copy'));
+    } catch {
+      /* コピーAPIが禁止されていても手動コピー欄を残す。 */
+      return false;
+    }
+  }
+
   function copyWithTextarea(json) {
     var old = document.getElementById('shodou-calc-import-copy');
     if (old) old.remove();
@@ -84,27 +95,33 @@
     close.type = 'button';
     close.textContent = '閉じる';
     close.onclick = function () { frame.remove(); };
+    var copy = document.createElement('button');
+    copy.type = 'button';
+    copy.textContent = 'コピー';
     var textarea = document.createElement('textarea');
     textarea.readOnly = true;
     textarea.value = json;
     textarea.setAttribute('aria-label', '取り込みJSON');
     textarea.style.cssText = 'display:block;width:100%;height:60%;box-sizing:border-box';
     frame.appendChild(label);
+    frame.appendChild(copy);
     frame.appendChild(close);
     frame.appendChild(textarea);
     document.body.appendChild(frame);
-    textarea.focus();
-    textarea.select();
-    var isCopied = false;
-    try {
-      isCopied = Boolean(document.execCommand && document.execCommand('copy'));
-    } catch {
-      /* コピーAPIが禁止されていても手動コピー欄を残す。 */
-    }
-    if (isCopied) {
+    function finish() {
       frame.remove();
       notifyCopied();
     }
+    /* スマートフォンでは操作の直後でないとコピーできないため、ボタンを押したときにもう一度試す。 */
+    copy.onclick = function () {
+      if (copyFromTextarea(textarea)) { finish(); return; }
+      try {
+        navigator.clipboard.writeText(json).then(finish, function () {});
+      } catch {
+        /* どちらも使えなければ、選択済みの欄から手動でコピーしてもらう。 */
+      }
+    };
+    if (copyFromTextarea(textarea)) finish();
   }
 
   function copyPayload() {
@@ -131,12 +148,20 @@
     payload.cards.forEach(function (card) { delete card.detail; });
     url = makeUrl();
   }
-  if (url.length <= maxUrlLength) {
+  function openApp() {
     try {
       if (window.open(url, '_blank')) return;
     } catch {
-      /* 新しいタブを開けない場合もコピーで取り込めるようにする。 */
+      /* 新しいタブを開けない場合は同じタブで開く。 */
+    }
+    /* ポップアップを止められても、同じタブでの移動なら操作の有無に関係なく開ける。 */
+    try {
+      window.location.assign(url);
+    } catch {
+      copyPayload();
     }
   }
-  copyPayload();
+
+  if (url.length <= maxUrlLength) openApp();
+  else copyPayload();
 })

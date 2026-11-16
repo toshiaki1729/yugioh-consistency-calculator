@@ -13,6 +13,7 @@ let open: ReturnType<typeof vi.fn>;
 let alert: ReturnType<typeof vi.fn>;
 let writeText: ReturnType<typeof vi.fn>;
 let execCommand: ReturnType<typeof vi.fn>;
+let assign: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   page = new Window({ url: 'https://www.db.yugioh-card.com/yugiohdb/member_deck.action?ope=1' });
@@ -21,7 +22,9 @@ beforeEach(() => {
   alert = vi.fn();
   writeText = vi.fn(() => Promise.resolve());
   execCommand = vi.fn(() => true);
+  assign = vi.fn();
   Object.assign(page, { open, alert, TextEncoder });
+  Object.defineProperty(page.location, 'assign', { configurable: true, value: assign });
   Object.defineProperty(page.navigator, 'clipboard', { configurable: true, value: { writeText } });
   Object.defineProperty(page.document, 'execCommand', { configurable: true, value: execCommand });
 });
@@ -32,8 +35,14 @@ function run() {
   page.eval(`(${source})(${JSON.stringify(appUrl)})`);
 }
 
-function sentPayload() {
-  const url = open.mock.calls[0][0] as string;
+function makeOversizedDeck() {
+  const body = page.document.querySelector('#monster_list tbody')!;
+  const row = body.querySelector('tr.row')!;
+  row.querySelector('td.card_name span')!.textContent = '名'.repeat(100);
+  for (let i = 0; i < 192; i++) body.appendChild(row.cloneNode(true));
+}
+
+function sentPayload(url = open.mock.calls[0][0] as string) {
   expect(url.startsWith(appUrl + '#import=')).toBe(true);
   const result = decodePayload(url.slice((appUrl + '#import=').length));
   expect(result.ok).toBe(true);
@@ -137,13 +146,11 @@ describe('自己完結したブックマークレット', () => {
   });
 
   it('detail全除去後も60,000文字超ならURLを開かずコピーする', async () => {
-    const body = page.document.querySelector('#monster_list tbody')!;
-    const row = body.querySelector('tr.row')!;
-    row.querySelector('td.card_name span')!.textContent = '名'.repeat(100);
-    for (let i = 0; i < 192; i++) body.appendChild(row.cloneNode(true));
+    makeOversizedDeck();
     run();
     await Promise.resolve();
     expect(open).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
     expect(writeText).toHaveBeenCalledTimes(1);
     const payload = JSON.parse(writeText.mock.calls[0][0]);
     expect(validatePayload(payload).ok).toBe(true);
@@ -152,18 +159,34 @@ describe('自己完結したブックマークレット', () => {
     expect(alert).toHaveBeenCalledWith('コピーしました。アプリの取り込み欄に貼り付けてください');
   });
 
-  it('ポップアップがブロックされたらClipboard APIでコピーする', async () => {
-    open.mockReturnValue(null);
+  it('PCでは新しいタブで開き、同じタブは移動しない', () => {
     run();
+    expect(open).toHaveBeenCalledWith(expect.any(String), '_blank');
+    expect(assign).not.toHaveBeenCalled();
+  });
+
+  it.each(['null', 'throws'])('ポップアップが%sなら同じタブでアプリを開く', async mode => {
+    if (mode === 'null') open.mockReturnValue(null);
+    else open.mockImplementation(() => { throw new Error('タブを開けません'); });
+    run();
+    await Promise.resolve();
+    expect(assign).toHaveBeenCalledTimes(1);
+    expect(sentPayload(assign.mock.calls[0][0]).cards).toHaveLength(8);
+    expect(writeText).not.toHaveBeenCalled();
     expect(alert).not.toHaveBeenCalled();
+  });
+
+  it('新しいタブも同じタブも開けなければコピーに切り替える', async () => {
+    open.mockReturnValue(null);
+    assign.mockImplementation(() => { throw new Error('移動できません'); });
+    run();
     await Promise.resolve();
     expect(validatePayload(JSON.parse(writeText.mock.calls[0][0])).ok).toBe(true);
-    expect(execCommand).not.toHaveBeenCalled();
-    expect(alert).toHaveBeenCalledTimes(1);
+    expect(alert).toHaveBeenCalledWith('コピーしました。アプリの取り込み欄に貼り付けてください');
   });
 
   it('Clipboard APIの拒否ならexecCommandへフォールバックする', async () => {
-    open.mockReturnValue(null);
+    makeOversizedDeck();
     writeText.mockRejectedValue(new Error('拒否'));
     run();
     await Promise.resolve();
@@ -173,7 +196,7 @@ describe('自己完結したブックマークレット', () => {
   });
 
   it.each(['absent', 'throws', 'getter'])('Clipboard APIが%sでも旧APIを試す', async mode => {
-    open.mockImplementation(() => { throw new Error('タブを開けません'); });
+    makeOversizedDeck();
     if (mode === 'absent') Object.defineProperty(page.navigator, 'clipboard', { value: undefined });
     else if (mode === 'getter') Object.defineProperty(page.navigator, 'clipboard', { get() { throw new Error('拒否'); } });
     else writeText.mockImplementation(() => { throw new Error('拒否'); });
@@ -184,7 +207,7 @@ describe('自己完結したブックマークレット', () => {
   });
 
   it.each(['false', 'throws', 'absent'])('旧APIが%sなら手動コピー枠を残し成功通知しない', async mode => {
-    open.mockReturnValue(null);
+    makeOversizedDeck();
     writeText.mockRejectedValue(new Error('拒否'));
     if (mode === 'false') execCommand.mockReturnValue(false);
     else if (mode === 'throws') execCommand.mockImplementation(() => { throw new Error('拒否'); });
@@ -202,14 +225,68 @@ describe('自己完結したブックマークレット', () => {
     run();
     await Promise.resolve();
     expect(page.document.querySelectorAll('#shodou-calc-import-copy')).toHaveLength(1);
-    (page.document.querySelector('#shodou-calc-import-copy button') as HTMLButtonElement).click();
+    const close = [...page.document.querySelectorAll('#shodou-calc-import-copy button')]
+      .find(button => button.textContent === '閉じる') as HTMLButtonElement;
+    close.click();
     expect(page.document.querySelector('#shodou-calc-import-copy')).toBeNull();
+  });
+
+  function openManualCopy() {
+    makeOversizedDeck();
+    writeText.mockRejectedValue(new Error('拒否'));
+    execCommand.mockReturnValue(false);
+    run();
+  }
+
+  function clickCopyButton() {
+    const copy = [...page.document.querySelectorAll('#shodou-calc-import-copy button')]
+      .find(button => button.textContent === 'コピー') as HTMLButtonElement;
+    copy.click();
+  }
+
+  it('コピーボタンで旧APIが失敗してもClipboard APIでコピーできれば閉じる', async () => {
+    openManualCopy();
+    await Promise.resolve();
+    await Promise.resolve();
+    writeText.mockResolvedValue(undefined);
+    clickCopyButton();
+    await Promise.resolve();
+    expect(writeText).toHaveBeenCalledTimes(2);
+    expect(page.document.querySelector('#shodou-calc-import-copy')).toBeNull();
+    expect(alert).toHaveBeenCalledTimes(1);
+  });
+
+  it('コピーボタンでも両方失敗すれば手動コピー枠を残す', async () => {
+    openManualCopy();
+    await Promise.resolve();
+    await Promise.resolve();
+    clickCopyButton();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(page.document.querySelector('#shodou-calc-import-copy')).not.toBeNull();
+    expect(alert).not.toHaveBeenCalled();
+  });
+
+  it('手動コピー枠のコピーボタンを押すと、その操作でもう一度コピーする', async () => {
+    makeOversizedDeck();
+    writeText.mockRejectedValue(new Error('拒否'));
+    execCommand.mockReturnValue(false);
+    run();
+    await Promise.resolve();
+    await Promise.resolve();
+    execCommand.mockReturnValue(true);
+    const copy = [...page.document.querySelectorAll('#shodou-calc-import-copy button')]
+      .find(button => button.textContent === 'コピー') as HTMLButtonElement;
+    copy.click();
+    expect(page.document.querySelector('#shodou-calc-import-copy')).toBeNull();
+    expect(alert).toHaveBeenCalledWith('コピーしました。アプリの取り込み欄に貼り付けてください');
   });
 
   it('表が無いページでは送信せず案内を出す', () => {
     page.document.body.textContent = '';
     run();
     expect(open).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
     expect(writeText).not.toHaveBeenCalled();
     expect(alert).toHaveBeenCalledWith('公式カードデータベースのデッキ詳細ページで実行してください');
   });
