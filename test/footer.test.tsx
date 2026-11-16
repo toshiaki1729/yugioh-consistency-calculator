@@ -52,3 +52,20 @@ describe('フッターのソースとライセンス', () => {
     expect(screen.getByText(licenseLabel)).toBeVisible();
   });
 });
+
+describe('フッターのバージョン', () => {
+  it.each(['v1.0.1', 'v1.2.3+15'])('バージョン %s を表示する', version => {
+    vi.stubEnv('VITE_APP_VERSION', version);
+    render(<App db={db} storage={storage} />);
+    const footer = within(screen.getByRole('contentinfo', { name: '出典' }));
+    expect(footer.getByText(`バージョン: ${version}`)).toBeVisible();
+  });
+
+  it.each([undefined, '', '1.0.1', 'v1.0', 'v1.0.1-3-gabc', '<b>v1.0.1</b>'])(
+    'バージョンが %s のときは表示しない', version => {
+      vi.stubEnv('VITE_APP_VERSION', version);
+      render(<App db={db} storage={storage} />);
+      expect(screen.queryByText(/バージョン:/)).not.toBeInTheDocument();
+    },
+  );
+});

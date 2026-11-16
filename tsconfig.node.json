@@ -15,5 +15,5 @@
     "noUnusedParameters": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "scripts/bookmarkletScript.d.mts"]
+  "include": ["vite.config.ts", "scripts/bookmarkletScript.d.mts", "scripts/appVersion.d.mts"]
 }
