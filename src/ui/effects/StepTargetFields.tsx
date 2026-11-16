@@ -1,4 +1,5 @@
 import { MAX_EXCAVATE_COUNT, MIN_EXCAVATE_COUNT } from '../../domain/limits';
+import { Checkbox } from '../common/Checkbox';
 import { Select } from '../common/Select';
 import { SlotSourceSelect } from '../patterns/SlotRow';
 import type { SlotOption } from '../patterns/SlotRow';
@@ -30,6 +31,12 @@ export function SearchFields({ step, sources, onChange }: TargetProps<'search'>)
 
 /** 手札から手放す対象と送り先を編集する。 */
 export function HandCostFields({ step, sources, onChange }: TargetProps<'handCost'>) {
+  function handleAllowMissingChange(isChecked: boolean) {
+    const next = { ...step };
+    if (isChecked) next.whenMissing = 'graveyard';
+    else delete next.whenMissing;
+    onChange(next);
+  }
   return <>
     <SlotSourceSelect source={step.target} sources={sources} missingLabel="未設定"
       onChange={target => onChange({ ...step, target })} />
@@ -39,5 +46,18 @@ export function HandCostFields({ step, sources, onChange }: TargetProps<'handCos
       <option value="graveyard">墓地</option>
       <option value="banishedFaceUp">表側で除外</option>
     </Select>
+    <Checkbox label="使う前の手札に対象が無くても使う" checked={step.whenMissing !== undefined}
+      onChange={event => handleAllowMissingChange(event.target.checked)} />
+    {step.whenMissing !== undefined && <>
+      <p className="EffectsView-note">
+        この手順を処理するときに対象が無ければ、その時点の手札をすべて指定した行き先へ送ります
+      </p>
+      <Select label="対象が無いときの手札の行き先" value={step.whenMissing}
+        onChange={event => onChange({ ...step,
+          whenMissing: event.target.value as typeof step.destination })}>
+        <option value="graveyard">墓地</option>
+        <option value="banishedFaceUp">表側で除外</option>
+      </Select>
+    </>}
   </>;
 }
