@@ -38,7 +38,9 @@ export type SimulationStep =
   | { kind: 'banishTop'; count: number }
   | { kind: 'excavate'; count: number; members: number[] | null }
   | { kind: 'search'; members: number[] }
-  | { kind: 'handCost'; members: number[]; destination: 'graveyard' | 'banishedFaceUp' };
+  | { kind: 'handCost'; members: number[]; destination: 'graveyard' | 'banishedFaceUp';
+      /** 対象が無いときに手札をすべて送る先。無ければ使う前の手札に対象が必要（今までどおり）。 */
+      whenMissing?: 'graveyard' | 'banishedFaceUp' };
 
 /** 入力のパターン順で返す、全体と単独目標の最終判定。 */
 export interface TrialResult {

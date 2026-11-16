@@ -25,7 +25,7 @@ export function prepareSimulationEffects(effects: SimulationEffect[], cardCount:
       requiredCosts: 0,
     }));
     const costKeys = steps.map(({ step, mask }) => {
-      if (step.kind !== 'handCost') return null;
+      if (step.kind !== 'handCost' || step.whenMissing !== undefined) return null;
       return mask.join('');
     });
     steps.forEach((prepared, index) => {

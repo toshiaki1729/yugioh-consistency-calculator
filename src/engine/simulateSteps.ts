@@ -61,7 +61,16 @@ function selectCard(
     state.candidates[i] = Number(mask[i] > 0 && available[i] > 0);
   }
   const chosen = chooseCard(state, goal, step);
-  if (chosen < 0) return;
+  if (chosen < 0) {
+    if (step.kind === 'handCost' && step.whenMissing !== undefined) {
+      const destination = state.moved[step.whenMissing];
+      for (let i = 0; i < state.hand.length; i++) {
+        destination[i] += state.hand[i];
+        state.hand[i] = 0;
+      }
+    }
+    return;
+  }
   if (step.kind === 'handCost') {
     state.hand[chosen]--;
     state.moved[step.destination][chosen]++;
