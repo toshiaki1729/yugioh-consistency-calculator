@@ -3,6 +3,7 @@ import { Window, type HTMLDivElement, type HTMLTextAreaElement, type HTMLButtonE
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import source from '../src/importer/bookmarklet.src.js?raw';
 import { buildBookmarkletUrl } from '../src/importer/bookmarklet';
+import { buildBookmarkletScript } from '../scripts/bookmarkletScript.mjs';
 import { decodePayload, validatePayload } from '../src/importer/payload';
 import { buildCardFromDetail } from '../src/importer/pageData';
 import fixture from './fixtures/neuron-deck-sample.html?raw';
@@ -72,14 +73,20 @@ describe('自己完結したブックマークレット', () => {
     expect(alert).not.toHaveBeenCalled();
   });
 
-  it('生成したjavascript URLを実行しても同じpayloadになる', () => {
+  it.each([
+    ['https://example.test/shodou/bookmarklet.js?t=1', appUrl],
+    ['https://example.test/bookmarklet.js?t=1', 'https://example.test/'],
+  ])('配信する本体は置き場所（%s）をアプリのURLとして同じpayloadを送る', (scriptUrl, expectedAppUrl) => {
     run();
     const expected = sentPayload();
     open.mockClear();
-    const url = buildBookmarkletUrl(appUrl);
-    expect(url.startsWith('javascript:')).toBe(true);
-    page.eval(decodeURIComponent(url.slice('javascript:'.length)));
-    expect(sentPayload()).toEqual(expected);
+    const script = buildBookmarkletScript(source);
+    expect(script).toMatch(/^[\x00-\x7f]*$/);
+    Object.defineProperty(page.document, 'currentScript', { configurable: true, value: { src: scriptUrl } });
+    page.eval(script);
+    const url = open.mock.calls[0][0] as string;
+    expect(url.startsWith(expectedAppUrl + '#import=')).toBe(true);
+    expect(decodePayload(url.slice((expectedAppUrl + '#import=').length))).toEqual({ ok: true, value: expected });
     expect(source.trim().startsWith('(function (appUrl) {')).toBe(true);
     expect(source.trim().endsWith('})')).toBe(true);
   });
@@ -289,5 +296,63 @@ describe('自己完結したブックマークレット', () => {
     expect(assign).not.toHaveBeenCalled();
     expect(writeText).not.toHaveBeenCalled();
     expect(alert).toHaveBeenCalledWith('公式カードデータベースのデッキ詳細ページで実行してください');
+  });
+});
+
+describe('ブックマークに登録する読み込み用コード', () => {
+  function runLoader(url: string) {
+    const appended: HTMLScriptElement[] = [];
+    vi.spyOn(page.document.documentElement, 'appendChild')
+      .mockImplementation(node => { appended.push(node as unknown as HTMLScriptElement); return node; });
+    expect(url.startsWith('javascript:')).toBe(true);
+    page.eval(decodeURIComponent(url.slice('javascript:'.length)));
+    expect(appended).toHaveLength(1);
+    return appended[0];
+  }
+
+  it('アプリと同じ場所の本体を、Refererを送らずに毎回読み込む', () => {
+    const script = runLoader(buildBookmarkletUrl(appUrl));
+    expect(script.tagName).toBe('SCRIPT');
+    expect(script.src).toMatch(/^https:\/\/example\.test\/shodou\/bookmarklet\.js\?t=\d+$/);
+    expect(script.referrerPolicy).toBe('no-referrer');
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it('評価結果はundefinedで、元のページを書き換えない', () => {
+    vi.spyOn(page.document.documentElement, 'appendChild').mockImplementation(node => node);
+    const url = buildBookmarkletUrl(appUrl);
+    expect(page.eval(decodeURIComponent(url.slice('javascript:'.length)))).toBeUndefined();
+  });
+
+  it('実行するたびに異なる時刻を付けて読み込む', () => {
+    const now = vi.spyOn(page.Date, 'now').mockReturnValueOnce(1000).mockReturnValueOnce(2000);
+    const url = buildBookmarkletUrl(appUrl);
+    expect(runLoader(url).src).toBe(appUrl + 'bookmarklet.js?t=1000');
+    vi.mocked(page.document.documentElement.appendChild).mockRestore();
+    expect(runLoader(url).src).toBe(appUrl + 'bookmarklet.js?t=2000');
+    now.mockRestore();
+  });
+
+  it.each(['onload', 'onerror'] as const)('%sでは読み込み用のscriptを取り除く', handler => {
+    const script = runLoader(buildBookmarkletUrl(appUrl));
+    const remove = vi.spyOn(script, 'remove');
+    script[handler]!(new page.Event(handler.slice(2)) as unknown as Event);
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  it('アプリのURLがindex.htmlでも同じ場所の本体を読み込む', () => {
+    const script = runLoader(buildBookmarkletUrl(appUrl + 'index.html'));
+    expect(script.src).toMatch(/^https:\/\/example\.test\/shodou\/bookmarklet\.js\?t=\d+$/);
+  });
+
+  it('読み込みに失敗したら案内を出す', () => {
+    const script = runLoader(buildBookmarkletUrl(appUrl));
+    script.onerror!(new page.Event('error') as unknown as Event);
+    expect(alert).toHaveBeenCalledWith('初動率計算機から、取り込み用のプログラムを読み込めませんでした');
+  });
+
+  it('Android の Chrome の上限 5,000 文字より十分短い（1,000 文字以下）', () => {
+    const longAppUrl = 'https://example.test/' + 'a'.repeat(200) + '/';
+    expect(buildBookmarkletUrl(longAppUrl).length).toBeLessThanOrEqual(1000);
   });
 });

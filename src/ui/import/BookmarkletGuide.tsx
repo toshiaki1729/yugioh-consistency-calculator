@@ -5,6 +5,8 @@ import { Button } from '../common/Button';
 
 const SMARTPHONE_INSTRUCTIONS = 'スマートフォン: 下のボタンでコードをコピー → 任意のページをブックマークし、URL をコピーしたコードに書き換える → 公式カードデータベースでデッキの詳細ページを開き、アドレスバーにブックマーク名を入力して選ぶ';
 
+const LOADER_NOTE = '実行すると、この計算機の公開ページから取り込み用のプログラムを読み込みます（デッキの内容や開いているページの URL は送りません）';
+
 /** ブックマークレットの登録・コピー手順と失敗時の手動コピー欄を表示する。 */
 export function BookmarkletGuide() {
   const [message, setMessage] = useState('');
@@ -43,6 +45,7 @@ export function BookmarkletGuide() {
         <textarea readOnly rows={4} value={bookmarklet} ref={selectCode} />
       </label>}
       <p className="ImportView-note">自分のデッキはログインした状態で詳細ページを開けば実行できます（公開設定は不要）</p>
+      <p className="ImportView-note">{LOADER_NOTE}</p>
     </div>
   </details>;
 }
