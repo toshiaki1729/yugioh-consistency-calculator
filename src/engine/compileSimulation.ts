@@ -3,11 +3,12 @@ import { getCardNameKey } from '../domain/ruleNames';
 import type { CardData, CardId, CardTarget, Deck, Pattern } from '../domain/types';
 import type { SimulationInput, SimulationStep } from './simulateTypes';
 import { compileSlot } from './distinctGroups';
+import { FILL_CARD_KEY } from './constants';
 
 /** メインデッキのカード番号に、スロット・条件・効果の対象を解決する。 */
 export function compileSimulation(
   deck: Deck, counts: Map<CardId, number>, active: Pattern[],
-  resolveCard: (id: CardId) => CardData | undefined,
+  resolveCard: (id: CardId) => CardData | undefined, fillCount = 0,
 ): Pick<SimulationInput, 'cards' | 'patterns' | 'effects'> {
   // 有効パターンを切り替えてもカード番号とシャッフルの乱数列を保つ。
   const cards = Array.from(counts, ([key, count]) => ({ key, count }));
@@ -50,5 +51,6 @@ export function compileSimulation(
         return { ...operation, members: resolveMembers(target) };
       }),
     }));
+  if (fillCount > 0) cards.push({ key: FILL_CARD_KEY, count: fillCount });
   return { cards, patterns, effects };
 }

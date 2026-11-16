@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { MAX_HAND_SIZE, MIN_HAND_SIZE } from '../../domain/limits';
+import { getMainFillCount } from '../../domain/mainFill';
 import { useAppState, useDispatch } from '../../state/store';
 import { Button } from '../common/Button';
 import { Select } from '../common/Select';
@@ -51,10 +52,21 @@ export function ResultPanel() {
         {isStale && <p className="result-warning">古い結果（再計算してください）</p>}
       </div>
       {error && <p role="alert" className="result-error">{error}</p>}
+      {results && !isStale && <MainFillNote />}
       {results ? <CalculationResults results={results} />
         : <p>パターンを設定して「計算する」を押してください。</p>}
     </div>
   </aside>;
+}
+
+function MainFillNote() {
+  const { activeDeck } = useAppState();
+  if (!activeDeck) return null;
+  const mainCount = activeDeck.entries.filter(entry => entry.section === 'main')
+    .reduce((total, entry) => total + entry.count, 0);
+  const fillCount = getMainFillCount(mainCount, activeDeck.mainFillTarget);
+  if (fillCount === 0) return null;
+  return <p>メイン {mainCount} 枚に {fillCount} 枚補って計算しています</p>;
 }
 
 function HandSizeSelect() {
