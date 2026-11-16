@@ -11,6 +11,7 @@ export function AppShell({ children, header }: { children: ReactNode; header?: R
   const saveStatus = useSaveStatus();
   const cardDb = useCardDb();
   const sourceUrl = getSourceUrl(import.meta.env.VITE_SOURCE_URL);
+  const version = getAppVersion(import.meta.env.VITE_APP_VERSION);
   const generatedAt = cardDb.status === 'ready' ? cardDb.db.generatedAt : undefined;
   const generatedLabel = cardDb.status === 'ready'
     ? formatGeneratedDate(cardDb.db.generatedAt) : null;
@@ -28,6 +29,7 @@ export function AppShell({ children, header }: { children: ReactNode; header?: R
       </main>
       <footer className="app-footer" aria-label="出典">
         <p>カードデータ: <a href="https://github.com/DawnbrandBots/yaml-yugi">yaml-yugi</a>（AGPL-3.0）。カードテキスト © Studio Dice/SHUEISHA, TV TOKYO, KONAMI。本アプリは非公式のファンメイドツールです</p>
+        {version && <p>バージョン: {version}</p>}
         {generatedLabel && <p>カードDB 生成: <time dateTime={generatedAt}>{generatedLabel}</time></p>}
         <p>{sourceUrl
           ? <a href={sourceUrl}>本アプリのソースコード（AGPL-3.0-or-later）</a>
@@ -35,6 +37,10 @@ export function AppShell({ children, header }: { children: ReactNode; header?: R
       </footer>
     </div>
   );
+}
+
+function getAppVersion(value: string | undefined): string | undefined {
+  return value && /^v\d+\.\d+\.\d+(?:\+\d+)?$/u.test(value) ? value : undefined;
 }
 
 function getSourceUrl(value: string | undefined): string | undefined {
