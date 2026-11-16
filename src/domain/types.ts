@@ -115,6 +115,8 @@ export type EffectStep =
 export interface Deck {
   id: string;
   name: string;
+  /** 補充後の目標枚数（40〜60）。省略時は補わない。 */
+  mainFillTarget?: number;
   entries: DeckEntry[];
   groups: CardGroup[];
   patterns: Pattern[];

@@ -1,6 +1,6 @@
 import {
   failValidation, decodeObject, createShapeDecoder, createIntegerDecoder,
-  createChoiceDecoder, createArrayDecoder, decodeId, decodeBoolean,
+  createChoiceDecoder, createArrayDecoder, decodeId, decodeBoolean, allowUndefined,
 } from './decoder';
 import type { Decoder } from './decoder';
 import * as limits from './limits';
@@ -76,6 +76,9 @@ const decodeTimestamp: Decoder<number> = (value, path) => {
 };
 const decodeDeckData: Decoder<Deck> = createShapeDecoder({
   id: decodeId, name: decodeTitle,
+  mainFillTarget: allowUndefined(createIntegerDecoder(
+    limits.MIN_MAIN_FILL_TARGET, limits.MAX_MAIN_FILL_TARGET, '補う枚数',
+  )),
   entries: createArrayDecoder(decodeEntry, limits.MAX_ENTRIES),
   groups: createArrayDecoder(decodeGroup, limits.MAX_GROUPS),
   patterns: createArrayDecoder(decodePattern, limits.MAX_PATTERNS), effects: decodeEffects,
