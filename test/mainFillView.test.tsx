@@ -29,7 +29,7 @@ async function setTarget(user: User, target: number | null) {
   await user.type(field, String(target));
 }
 
-function setup(mainCount = 35, target?: number) {
+function setup(mainCount = 35, target?: number, secondTarget?: number) {
   const state = createInitialState();
   const deck = state.decks[0];
   deck.entries = [
@@ -42,6 +42,9 @@ function setup(mainCount = 35, target?: number) {
     { id: 's1', source: { type: 'card', cardId: 'k1' }, count: 1, distinctNames: false },
   ] }];
   if (target !== undefined) deck.mainFillTarget = target;
+  if (secondTarget !== undefined) {
+    state.decks.push({ ...structuredClone(deck), id: 'deck-2', name: 'デッキ 2', mainFillTarget: secondTarget });
+  }
   const values = new Map([[STORAGE_KEY, JSON.stringify(state)]]);
   const storage = {
     getItem: (key: string) => values.get(key) ?? null,
@@ -114,6 +117,42 @@ describe('メインデッキを補う設定の画面', () => {
     await user.click(checkbox);
     expect(field).toHaveValue('40');
     await waitFor(() => expect(savedDeck().mainFillTarget).toBe(40));
+  });
+
+  it('範囲外の入力途中でデッキを切り替えて戻ると、各デッキの保存値を表示する', async () => {
+    const { user, field } = setup(35, 45, 50);
+    await user.clear(field);
+    await user.type(field, '7');
+    expect(screen.getByText(invalidNote)).toBeVisible();
+    const deckSelect = screen.getByRole('combobox', { name: 'デッキ選択' });
+    await user.selectOptions(deckSelect, 'deck-2');
+    expect(screen.getByRole('textbox', { name: '補った後の枚数' })).toHaveValue('50');
+    expect(screen.queryByText(invalidNote)).not.toBeInTheDocument();
+    await user.selectOptions(deckSelect, within(deckSelect).getAllByRole('option')[0]);
+    expect(screen.getByRole('textbox', { name: '補った後の枚数' })).toHaveValue('45');
+    expect(screen.queryByText(invalidNote)).not.toBeInTheDocument();
+  });
+
+  it('有効な値のままチェックを外して入れ直すと、その値で補う', async () => {
+    const { user, checkbox, field, savedDeck } = setup(35, 45);
+    await user.click(checkbox);
+    expect(field).toBeDisabled();
+    expect(field).toHaveValue('45');
+    await waitFor(() => expect(savedDeck()).not.toHaveProperty('mainFillTarget'));
+    await user.click(checkbox);
+    expect(field).toHaveValue('45');
+    await waitFor(() => expect(savedDeck().mainFillTarget).toBe(45));
+  });
+
+  it('範囲外の入力のまま保存待ちを過ぎても、保存値と計算入力は直前の有効値のまま', async () => {
+    const { user, field, savedDeck, detail, worker } = setup(35, 45);
+    await user.clear(field);
+    await user.type(field, '61');
+    await act(() => new Promise(resolve => setTimeout(resolve, 700)));
+    expect(savedDeck().mainFillTarget).toBe(45);
+    await user.click(detail.getByRole('button', { name: '計算する' }));
+    await detail.findByText('計算が完了しました');
+    expect(worker.request?.input).toMatchObject({ mode: 'classes', input: { deckSize: 45 } });
   });
 
   it('補った結果の案内は詳細だけに出し、40 → 45 の変更で古い結果になって消える', async () => {
