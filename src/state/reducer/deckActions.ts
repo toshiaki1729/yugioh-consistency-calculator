@@ -1,5 +1,4 @@
 import type { Deck } from '../../domain/types';
-import { MIN_MAIN_FILL_TARGET, MAX_MAIN_FILL_TARGET } from '../../domain/limits';
 import type { Action, ActionOf, EditContext } from './types';
 import { copyDeckWithNewIds, createCopyName, createEmptyDeck } from './factories';
 import {
@@ -32,20 +31,6 @@ export function importDeck(context: EditContext, action: ActionOf<'deck/import'>
 
 function renameDeck(deck: Deck, action: ActionOf<'deck/rename'>): void {
   deck.name = action.name;
-}
-
-function setMainFillTarget(
-  deck: Deck, action: ActionOf<'deck/setMainFillTarget'>,
-): string | void {
-  const { target } = action;
-  if (target === null) {
-    delete deck.mainFillTarget;
-    return;
-  }
-  if (!Number.isInteger(target) || target < MIN_MAIN_FILL_TARGET || target > MAX_MAIN_FILL_TARGET) {
-    return `補う枚数は ${MIN_MAIN_FILL_TARGET}〜${MAX_MAIN_FILL_TARGET} の整数で指定してください`;
-  }
-  deck.mainFillTarget = target;
 }
 
 function duplicateDeck(
@@ -91,7 +76,6 @@ export function editActiveDeck(context: EditContext, action: Action): string | v
   deck.updatedAt = context.now();
   switch (action.type) {
     case 'deck/rename': return renameDeck(deck, action);
-    case 'deck/setMainFillTarget': return setMainFillTarget(deck, action);
     case 'deck/duplicate': return duplicateDeck(context, deck, index, action);
     case 'deck/delete': return deleteDeck(context, index);
     case 'entry/add': return addEntry(deck, action);

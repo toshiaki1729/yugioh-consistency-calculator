@@ -1,5 +1,4 @@
 import { MAX_HAND_SIZE, MIN_HAND_SIZE } from '../domain/limits';
-import { getMainFillCount } from '../domain/mainFill';
 import type { CardId, Deck, Pattern, Result } from '../domain/types';
 import { MAX_DECK_SIZE } from './constants';
 import { DEFAULT_LIMITS } from './types';
@@ -8,7 +7,6 @@ import type { EngineLimits } from './types';
 interface CompilationPreparation {
   counts: Map<CardId, number>;
   deckSize: number;
-  fillCount: number;
   active: Pattern[];
   settings: EngineLimits;
   isSimulation: boolean;
@@ -28,8 +26,6 @@ export function prepareCompilation(
   if (deckSize > MAX_DECK_SIZE) {
     return { ok: false, error: `メインデッキが 60 枚を超えているため計算できません（現在 ${deckSize} 枚）` };
   }
-  const fillCount = getMainFillCount(deckSize, deck.mainFillTarget);
-  deckSize += fillCount;
   for (const handSize of handSizes) {
     if (!Number.isInteger(handSize) || handSize < MIN_HAND_SIZE || handSize > MAX_HAND_SIZE) {
       return { ok: false, error: `手札枚数 ${handSize} は 1〜10 の整数で指定してください` };
@@ -53,5 +49,5 @@ export function prepareCompilation(
     || !Number.isSafeInteger(settings.seed)) {
     return { ok: false, error: '計算上限は 0 以上、サンプル数は 1 以上の整数、シードは整数で指定してください' };
   }
-  return { ok: true, value: { counts, deckSize, fillCount, active, settings, isSimulation } };
+  return { ok: true, value: { counts, deckSize, active, settings, isSimulation } };
 }

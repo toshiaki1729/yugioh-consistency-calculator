@@ -59,12 +59,6 @@ export const MIN_HAND_SIZE = 1;
 /** 任意の手札枚数の上限。 */
 export const MAX_HAND_SIZE = 10;
 
-/** メインデッキの補充先に指定できる最小枚数。 */
-export const MIN_MAIN_FILL_TARGET = 40;
-
-/** メインデッキの補充先に指定できる最大枚数。 */
-export const MAX_MAIN_FILL_TARGET = 60;
-
 /** 名前・キーワードの最小文字数。 */
 export const MIN_NAME_LENGTH = 1;
 

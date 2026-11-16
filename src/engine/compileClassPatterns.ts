@@ -7,7 +7,7 @@ import { compileSlot } from './distinctGroups';
 /** ドロー効果・上からの除外を使わない有効パターンをクラスに集約する。 */
 export function compileClassPatterns(
   deck: Deck, counts: Map<CardId, number>, active: Pattern[],
-  resolveCard: (id: CardId) => CardData | undefined, fillCount = 0,
+  resolveCard: (id: CardId) => CardData | undefined,
 ) {
   const impossiblePatternIds = active.filter(pattern =>
     pattern.conditions.some(condition => condition.kind === 'movedIncludes'))
@@ -19,11 +19,9 @@ export function compileClassPatterns(
   const targets = [...slots, ...remaining.flat().map(condition => ({
     source: condition.target, distinctNames: false,
   }))];
-  const collected = collectClasses(
+  const { classes, otherCount, members, classCardIds } = collectClasses(
     deck, counts, targets, slots.length, resolveCard,
   );
-  const { classes, members, classCardIds } = collected;
-  const otherCount = collected.otherCount + fillCount;
   const getNameKey = (index: number) => {
     const cardId = classCardIds[index];
     const entry = deck.entries.find(item => item.section === 'main' && item.cardId === cardId)!;

@@ -20,7 +20,6 @@ export type Action =
   | { type: 'error/clear' }
   | { type: 'deck/create'; name?: string }
   | { type: 'deck/rename'; name: string }
-  | { type: 'deck/setMainFillTarget'; target: number | null }
   | { type: 'deck/duplicate'; name?: string }
   | { type: 'deck/delete' }
   | { type: 'deck/select'; deckId: string | null }

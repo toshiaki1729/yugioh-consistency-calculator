@@ -12,8 +12,8 @@ export function compile(
 ): Result<EngineInput, string> {
   const prepared = prepareCompilation(deck, handSizes, limits, true);
   if (!prepared.ok) return prepared;
-  const { counts, deckSize, fillCount, active, settings } = prepared.value;
-  const compiled = compileClassPatterns(deck, counts, active, resolveCard, fillCount);
+  const { counts, deckSize, active, settings } = prepared.value;
+  const compiled = compileClassPatterns(deck, counts, active, resolveCard);
   return {
     ok: true,
     value: { deckSize, ...compiled, handSizes: [...handSizes], limits: settings },
