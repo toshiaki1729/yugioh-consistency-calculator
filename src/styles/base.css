@@ -30,8 +30,8 @@ select,
 textarea {
   font: inherit;
   color: inherit;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius);
   padding: var(--space-1) var(--space-2);
   max-width: 100%;
@@ -45,6 +45,8 @@ select {
 
 button {
   cursor: pointer;
+  background: var(--button-bg);
+  border-color: var(--button-border);
 }
 
 a {
