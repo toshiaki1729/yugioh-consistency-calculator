@@ -6,7 +6,7 @@ import type { SlotOption } from '../patterns/SlotRow';
 export type StepDraft = Exclude<EffectStep, { kind: 'search' | 'handCost' }>
   | { kind: 'search'; target: CardTarget | null }
   | { kind: 'handCost'; target: CardTarget | null;
-    destination: 'graveyard' | 'banishedFaceUp' };
+    destination: 'graveyard' | 'banishedFaceUp'; whenMissing?: 'graveyard' | 'banishedFaceUp' };
 
 /** 対象未設定の手順を含めて保持する効果の編集内容。 */
 export type EffectDraft = Omit<DrawEffect, 'id' | 'steps'> & { steps: StepDraft[] };
@@ -53,7 +53,13 @@ export function summarizeStep(step: EffectStep): string {
     case 'banishTop': return `デッキの上から ${step.count} 枚を裏側で除外`;
     case 'excavate': return `${step.count} 枚めくって 1 枚を手札に`;
     case 'search': return 'サーチ';
-    case 'handCost': return step.destination === 'graveyard'
-      ? '手札から 1 枚を墓地へ送る' : '手札から 1 枚を表側で除外';
+    case 'handCost': {
+      const description = step.destination === 'graveyard'
+        ? '手札から 1 枚を墓地へ送る' : '手札から 1 枚を表側で除外';
+      if (step.whenMissing === undefined) return description;
+      const suffix = step.whenMissing === 'graveyard'
+        ? '（無ければ手札をすべて墓地へ）' : '（無ければ手札をすべて表側で除外）';
+      return description + suffix;
+    }
   }
 }

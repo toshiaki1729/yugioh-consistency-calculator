@@ -1,5 +1,6 @@
 import {
-  allowNull, createArrayDecoder, createChoiceDecoder, createIntegerDecoder, createShapeDecoder,
+  allowNull, allowUndefined, createArrayDecoder, createChoiceDecoder, createIntegerDecoder,
+  createShapeDecoder,
   createUniqueArrayDecoder, decodeBoolean, decodeId, decodeObject, failValidation, readFields,
 } from './decoder';
 import type { Decoder } from './decoder';
@@ -74,6 +75,7 @@ const decodeStep: Decoder<EffectStep> = (value, path) => {
     case 'handCost': return readFields({
       kind: createChoiceDecoder(['handCost']), target: decodeSource,
       destination: createChoiceDecoder(['graveyard', 'banishedFaceUp']),
+      whenMissing: allowUndefined(createChoiceDecoder(['graveyard', 'banishedFaceUp'])),
     }, record.value, path);
     default: return failValidation(`${path}.kind`, 'ドロー効果の手順の種類が不正です');
   }

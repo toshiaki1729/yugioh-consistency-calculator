@@ -110,7 +110,9 @@ export type EffectStep =
   | { kind: 'banishTop'; count: number }
   | { kind: 'excavate'; count: number; target: CardTarget | null }
   | { kind: 'search'; target: CardTarget }
-  | { kind: 'handCost'; target: CardTarget; destination: 'graveyard' | 'banishedFaceUp' };
+  | { kind: 'handCost'; target: CardTarget; destination: 'graveyard' | 'banishedFaceUp';
+      /** 対象が無いときに手札をすべて送る先。無ければ使う前の手札に対象が必要（今までどおり）。 */
+      whenMissing?: 'graveyard' | 'banishedFaceUp' };
 /** カードと初動条件をまとめた保存対象のデッキ。 */
 export interface Deck {
   id: string;
