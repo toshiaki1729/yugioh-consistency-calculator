@@ -12,6 +12,22 @@ import { FakeEngineWorker } from './fixtures/engineWorker';
 const deckNote = /計算では、初動に関係しないカード/;
 const resultNote = /メイン \d+ 枚に \d+ 枚補って計算しています/;
 const staleNote = '古い結果（再計算してください）';
+const fillNote = 'メインデッキの枚数が入力した枚数より少ないとき、足りない分を初動に関係しないカードとして加えて計算します';
+const invalidNote = '40〜60 の整数を入力してください（この値は保存されていません）。';
+type User = ReturnType<typeof userEvent.setup>;
+
+/** チェックを外すか、チェックを入れて枚数を入力し直す。 */
+async function setTarget(user: User, target: number | null) {
+  const checkbox = screen.getByRole('checkbox', { name: '足りない分を補う' });
+  if (target === null) {
+    if ((checkbox as HTMLInputElement).checked) await user.click(checkbox);
+    return;
+  }
+  if (!(checkbox as HTMLInputElement).checked) await user.click(checkbox);
+  const field = screen.getByRole('textbox', { name: '補った後の枚数' });
+  await user.clear(field);
+  await user.type(field, String(target));
+}
 
 function setup(mainCount = 35, target?: number) {
   const state = createInitialState();
@@ -39,42 +55,69 @@ function setup(mainCount = 35, target?: number) {
   const bar = within(panelElement.querySelector<HTMLElement>('.result-bar')!);
   return {
     user: userEvent.setup(), worker, detail, bar,
-    select: screen.getByRole('combobox', { name: '足りない分を補う' }),
+    checkbox: screen.getByRole<HTMLInputElement>('checkbox', { name: '足りない分を補う' }),
+    field: screen.getByRole<HTMLInputElement>('textbox', { name: '補った後の枚数' }),
     savedDeck: () => (JSON.parse(values.get(STORAGE_KEY)!) as AppState).decks[0],
   };
 }
 
 describe('メインデッキを補う設定の画面', () => {
-  it('初期値・22 個の選択肢・保存・解除と、メインだけの枚数表示を確認する', async () => {
-    const { user, select, savedDeck, detail } = setup();
-    expect(select).toHaveDisplayValue('補わない');
-    const options = within(select).getAllByRole('option');
-    expect(options.map(option => option.textContent)).toEqual([
-      '補わない', ...Array.from({ length: 21 }, (_, index) => `${40 + index} 枚まで`),
-    ]);
+  it('初期値・保存・解除と、メインだけの枚数表示を確認する', async () => {
+    const { user, checkbox, field, savedDeck, detail } = setup();
+    expect(checkbox).not.toBeChecked();
+    expect(field).toBeDisabled();
+    expect(field).toHaveValue('40');
     expect(screen.queryByText(deckNote)).not.toBeInTheDocument();
-    await user.selectOptions(select, '40');
-    expect(select).toHaveDisplayValue('40 枚まで');
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+    expect(field).toBeEnabled();
     expect(screen.getByText(deckNote))
       .toHaveTextContent('計算では、初動に関係しないカードを 5 枚補って 40 枚にします');
     expect(screen.getByText(/メインデッキは 40〜60 枚を推奨します。/)).toHaveTextContent('現在 35 枚');
-    expect(screen.getByText('メインデッキが選んだ枚数より少ないとき、足りない分を初動に関係しないカードとして加えて計算します'))
-      .toHaveClass('DeckView-note');
+    expect(screen.getByText(fillNote)).toHaveClass('DeckView-note');
     expect(detail.queryByText(resultNote)).not.toBeInTheDocument();
     await waitFor(() => expect(savedDeck().mainFillTarget).toBe(40));
-    await user.selectOptions(select, '');
+    await user.click(checkbox);
+    expect(field).toBeDisabled();
     expect(screen.queryByText(deckNote)).not.toBeInTheDocument();
     await waitFor(() => expect(savedDeck()).not.toHaveProperty('mainFillTarget'));
   });
 
-  it('保存済みの設定を選択状態で表示する', () => {
-    const { select } = setup(35, 45);
-    expect(select).toHaveDisplayValue('45 枚まで');
+  it('保存済みの設定を入力欄に表示する', () => {
+    const { checkbox, field } = setup(35, 45);
+    expect(checkbox).toBeChecked();
+    expect(field).toHaveValue('45');
     expect(screen.getByText(deckNote)).toHaveTextContent('10 枚補って 45 枚にします');
   });
 
+  it('範囲外の入力は保存せずに注意を出し、範囲内に直すと保存する', async () => {
+    const { user, field, savedDeck } = setup(35, 45);
+    await user.clear(field);
+    await user.type(field, '61');
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText(invalidNote)).toBeVisible();
+    expect(screen.getByText(deckNote)).toHaveTextContent('10 枚補って 45 枚にします');
+    await user.clear(field);
+    expect(screen.getByText(invalidNote)).toBeVisible();
+    await user.type(field, '50');
+    expect(screen.queryByText(invalidNote)).not.toBeInTheDocument();
+    expect(screen.getByText(deckNote)).toHaveTextContent('15 枚補って 50 枚にします');
+    await waitFor(() => expect(savedDeck().mainFillTarget).toBe(50));
+  });
+
+  it('入力欄が範囲外のままチェックを外して入れ直すと 40 枚で補う', async () => {
+    const { user, checkbox, field, savedDeck } = setup(35, 45);
+    await user.clear(field);
+    await user.type(field, '7');
+    await user.click(checkbox);
+    expect(screen.queryByText(invalidNote)).not.toBeInTheDocument();
+    await user.click(checkbox);
+    expect(field).toHaveValue('40');
+    await waitFor(() => expect(savedDeck().mainFillTarget).toBe(40));
+  });
+
   it('補った結果の案内は詳細だけに出し、40 → 45 の変更で古い結果になって消える', async () => {
-    const { user, select, detail, bar, worker } = setup(35, 40);
+    const { user, detail, bar, worker } = setup(35, 40);
     await user.click(detail.getByRole('button', { name: '計算する' }));
     expect(await detail.findByText(resultNote)).toHaveTextContent('メイン 35 枚に 5 枚補って計算しています');
     expect(bar.queryByText(resultNote)).not.toBeInTheDocument();
@@ -83,7 +126,7 @@ describe('メインデッキを補う設定の画面', () => {
     await user.click(bar.getByRole('button', { name: '計算結果を展開する' }));
     expect(bar.getByRole('button', { name: '計算結果を折りたたむ' })).toHaveAttribute('aria-expanded', 'true');
     expect(detail.getByText(resultNote)).toBeVisible();
-    await user.selectOptions(select, '45');
+    await setTarget(user, 45);
     expect(detail.getByText(staleNote)).toBeVisible();
     expect(detail.queryByText(resultNote)).not.toBeInTheDocument();
     expect(screen.getByText(deckNote)).toHaveTextContent('10 枚補って 45 枚にします');
@@ -93,10 +136,10 @@ describe('メインデッキを補う設定の画面', () => {
   });
 
   it('補った計算の後に解除すると案内が消え、再計算は実際の 35 枚を使う', async () => {
-    const { user, select, detail, worker } = setup(35, 40);
+    const { user, detail, worker } = setup(35, 40);
     await user.click(detail.getByRole('button', { name: '計算する' }));
     await detail.findByText(resultNote);
-    await user.selectOptions(select, '');
+    await setTarget(user, null);
     expect(detail.getByText(staleNote)).toBeVisible();
     expect(screen.queryByText(deckNote)).not.toBeInTheDocument();
     expect(detail.queryByText(resultNote)).not.toBeInTheDocument();
@@ -108,7 +151,7 @@ describe('メインデッキを補う設定の画面', () => {
     expect(detail.queryByText(resultNote)).not.toBeInTheDocument();
   });
 
-  it.each([40, 50])('メイン %i 枚で 40 枚までを選んでも補う案内を出さない', async mainCount => {
+  it.each([40, 50])('メイン %i 枚で 40 枚に設定しても補う案内を出さない', async mainCount => {
     const { user, detail } = setup(mainCount, 40);
     expect(screen.queryByText(deckNote)).not.toBeInTheDocument();
     await user.click(detail.getByRole('button', { name: '計算する' }));
@@ -124,11 +167,11 @@ describe('メインデッキを補う設定の画面', () => {
     expect(detail.getByRole('button', { name: '計算する' })).toBeDisabled();
   });
 
-  it('メイン 50 枚で補わない → 40 にしても結果は古くならない', async () => {
-    const { user, select, detail } = setup(50);
+  it('メイン 50 枚で補わない → 40 枚にしても結果は古くならない', async () => {
+    const { user, detail } = setup(50);
     await user.click(detail.getByRole('button', { name: '計算する' }));
     await detail.findByText('計算が完了しました');
-    await user.selectOptions(select, '40');
+    await setTarget(user, 40);
     expect(detail.queryByText(staleNote)).not.toBeInTheDocument();
     expect(detail.getByRole('table', { name: '初動率' })).toBeVisible();
     expect(screen.queryByText(deckNote)).not.toBeInTheDocument();
@@ -136,14 +179,14 @@ describe('メインデッキを補う設定の画面', () => {
   });
 
   it.each([false, true])('計算中に設定を変えると完了後も補う案内を出さない（前の結果: %s）', async hasPrevious => {
-    const { user, select, detail, worker } = setup(35, 40);
+    const { user, detail, worker } = setup(35, 40);
     if (hasPrevious) {
       await user.click(detail.getByRole('button', { name: '計算する' }));
       await detail.findByText(resultNote);
     }
     worker.deferred = true;
     await user.click(detail.getByRole('button', { name: '計算する' }));
-    await user.selectOptions(select, '45');
+    await setTarget(user, 45);
     expect(detail.getByText('計算中')).toBeVisible();
     expect(detail.queryByText(resultNote)).not.toBeInTheDocument();
     if (hasPrevious) expect(detail.getByText(staleNote)).toBeVisible();
