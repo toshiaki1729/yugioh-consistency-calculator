@@ -15,6 +15,10 @@
   --kind-monster: #8A5410;
   --kind-spell: #146B5F;
   --kind-trap: #A23B72;
+  --field-bg: #FFFFFF;
+  --field-border: #DDD9D0;
+  --button-bg: #FFFFFF;
+  --button-border: #DDD9D0;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -53,5 +57,11 @@
     --kind-monster: #E0A55A;
     --kind-spell: #5CC7B5;
     --kind-trap: #E07FB0;
+    /* 面と同じ色だと境界が見えないため、入力欄は沈め、ボタンは浮かせて縁を 3:1 以上にする。
+       ボタン内の補足文字（--text-muted）も 4.5:1 以上を保つ明るさにとどめる。 */
+    --field-bg: #16171A;
+    --field-border: #6E717C;
+    --button-bg: #31333B;
+    --button-border: #7A7E8A;
   }
 }
