@@ -10,8 +10,11 @@ export default defineConfig({
   base: './',
   plugins: [react(), bookmarkletPlugin()],
   test: {
-    environment: 'node',
-    environmentMatchGlobs: [['**/*.test.tsx', 'happy-dom']],
     setupFiles: ['./test/setup.ts'],
+    // 画面のテスト（.tsx）だけ DOM の環境で動かす。
+    projects: [
+      { extends: true, test: { name: 'node', environment: 'node', include: ['**/*.test.ts'] } },
+      { extends: true, test: { name: 'dom', environment: 'happy-dom', include: ['**/*.test.tsx'] } },
+    ],
   },
 });
